@@ -5,6 +5,8 @@
 #include <string.h> // -> strlen
 #include <ctype.h> // -> isspace
 
+#include "growArray.h"
+
 #define MAX_SEARCH_LEN 128
 #define MAX_MATCH_LEN (MAX_SEARCH_LEN*2)
 
@@ -16,22 +18,22 @@ int main(int argc, char *argv[]) {
 	}
 	
 	// Read search string from stdin.
-	char searchString[MAX_SEARCH_LEN];
+	char searchCString[MAX_SEARCH_LEN];
 	printf("Enter search string: ");
-	if (fgets(searchString, MAX_SEARCH_LEN, stdin) == NULL) {
+	if (fgets(searchCString, MAX_SEARCH_LEN, stdin) == NULL) {
 		printf("Something bad happened while reading stdin.\n");
 		exit(EXIT_FAILURE);
 	} // otherwise, searchString now contains the user-supplied string.
+	
+	struct GrowString searchString = growstr_from_cstr(searchCString, MAX_SEARCH_LEN);
 	
 	// Note that I do accept spaces in the search string. When I match the
 	// beginning of the search string (no matter if it's whitespace or not)
 	// the program will shift into the "trying to see if it matches all the
 	// string" mode rather than "wait for the next word" mode.
 	
-	size_t searchStringLen = strlen(searchString);
-	
 	// Error if user submitted a zero-character string.
-	if (searchStringLen <= 0) {
+	if (searchString.length <= 0) {
 		printf("Please enter a search string!\n");
 		exit(EXIT_FAILURE);
 	}
@@ -40,9 +42,24 @@ int main(int argc, char *argv[]) {
 	// (Had to do this in assembly once! Annoying!)
 	// (fgets stops reading after recieving a newline from stdin, but it still
 	//  does add this newline to the buffer (unless the buffer'd be filled))
-	if (searchString[searchStringLen - 1] == '\n') {
-		searchString[--searchStringLen] = '\0';
+	if (searchString.data[searchString.length - 1] == '\n') {
+		growstr_pop(&searchString);
 	}
+	
+	for (int i = 0; i < 128; i ++) {
+		growstr_push(&searchString, ' ');
+		growstr_push(&searchString, 'h');
+		growstr_pushstr(&searchString, "i");
+		growstr_push(&searchString, '!');
+		growstr_pushstr(&searchString, " hello!");
+		growstr_pushstr(&searchString, " world!");
+	}
+	
+	printf("%s\n", searchString.data);
+	
+	growstr_destroy(&searchString);
+	
+	return EXIT_SUCCESS;
 	
 	// Open requested file.
 	FILE *subject = fopen(argv[1], "r");
@@ -59,7 +76,7 @@ int main(int argc, char *argv[]) {
 	//  worry, it has buffered file I/O!" or am i misremembering?...)
 	int nextChar; bool newWord = true;
 	while ((nextChar = fgetc(subject)) != EOF) {
-		if (matchStringLen && matchStringLen < searchStringLen) {
+		if (matchStringLen) {
 			// If we've already found a promising start...
 			
 			// Check if...
@@ -68,13 +85,12 @@ int main(int argc, char *argv[]) {
 			// 2. the character we just read matches the next character of
 			//    the search string, so that we can continue building up
 			//    a match to display.
-			// 3. the match string is fixed size, so we don't want to
-			//    overflow its buffer. this will always be true, but
-			//    i think it's cool   to keep here.
-			if (nextChar == searchString[matchStringLen]) {
+			if (matchStringLen < searchString.length
+			&&  nextChar == searchString.data[matchStringLen]) {
 				// Add the character we just read to the match buffer.
 				matchString[matchStringLen++] = nextChar;
-				continue;
+			} else if (!isspace(matchStringLen)) {
+				
 			}
 			
 			// (read until we run out of space in the buffer
@@ -82,7 +98,7 @@ int main(int argc, char *argv[]) {
 			if (!isspace(nextChar)) {
 				newWord = true;
 			}
-		} else if (newWord && nextChar == searchString[0]) {
+		} else if (newWord && nextChar == searchString.data[0]) {
 			matchString[matchStringLen++] = nextChar;
 		} else {
 			newWord = isspace(nextChar);
