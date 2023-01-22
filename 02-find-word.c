@@ -9,10 +9,18 @@
 
 #define MAX_SEARCH_LEN 128
 
+bool startsWith(const char *s, const char *start) {
+	while (*s != '\0' && *start != '\0')
+		if (*(s++) != *(start++)) return false;
+	
+	// only successful if start was the one that ended first.
+	return *start == '\0';
+}
+
 int main(int argc, char *argv[]) {
 	// Make sure user supplied the correct number of arguments.
 	if (argc != 2) { // (First argument is always the program executable.)
-		printf("Please supply a file name as the first argument.\n");
+		fprintf(stderr, "Please supply a file name as the first argument.\n");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -20,9 +28,17 @@ int main(int argc, char *argv[]) {
 	char searchCString[MAX_SEARCH_LEN];
 	printf("Enter search string: ");
 	if (fgets(searchCString, MAX_SEARCH_LEN, stdin) == NULL) {
-		printf("Something bad happened while reading stdin.\n");
+		fprintf(stderr, "Something bad happened while reading stdin.\n");
 		exit(EXIT_FAILURE);
 	} // otherwise, searchString now contains the user-supplied string.
+	
+	size_t searchLength = strlen(searchCString);
+	
+	// Error if user submitted a zero-character string.
+	if (searchLength <= 0) {
+		fprintf(stderr, "Please enter a search string!\n");
+		exit(EXIT_FAILURE);
+	}
 	
 	GrowString searchString = growstr_from_cstr(searchCString, MAX_SEARCH_LEN);
 	
@@ -30,12 +46,6 @@ int main(int argc, char *argv[]) {
 	// beginning of the search string (no matter if it's whitespace or not)
 	// the program will shift into the "trying to see if it matches all the
 	// string" mode rather than "wait for the next word" mode.
-	
-	// Error if user submitted a zero-character string.
-	if (searchString.length <= 0) {
-		printf("Please enter a search string!\n");
-		exit(EXIT_FAILURE);
-	}
 	
 	// Trim the last newline character, if present.
 	// (Had to do this in assembly once! Annoying!)
@@ -77,30 +87,38 @@ int main(int argc, char *argv[]) {
 					growstr_push(&matchString, nextChar);
 				} else {
 					// It's possible that a space is in the search string.
-					// Check if any of the characters after each space are
-					// a match with the search string.
+					// For each space in the match, check if the substring
+					// formed by all the characters after that space could
+					// be the beginning of a new match using startsWith.
 					
-					// this is scary. sorry
+					// (Search 'ab ac' in a file containing 'ab ab ac'
+					//  to see this scenario in action.)
 					
-					ptrdiff_t nextSpace = 0;
-					while ((nextSpace =
-						growstr_indexofpredicate(&matchString, isspace, nextSpace + 1)
-					) >= 0) {
-						for (size_t i = nextSpace + 1; i < matchString.length; i++)
-							if (searchString.data[i - (nextSpace + 1)] != matchString.data[i])
-								goto not_a_match;
-						break; not_a_match:
-					}
+					ptrdiff_t nextSpace = 0; // don't start at 0, we just
+					// checked if the string matched starting there. it didn't.
+					while ((nextSpace = growstr_indexofpredicate(&matchString, isspace, nextSpace + 1)) >= 0)
+						if (startsWith(searchString.data, &matchString.data[nextSpace + 1]))
+							break;
 					
 					if (nextSpace >= 0) { // match found
 						nextSpace++;
+						
+						// Remove all characters up to and including
+						// the space, leaving only the matching portion.
 						growstr_snipstart(&matchString, nextSpace);
-						ungetc(nextChar, subject); // :)
-						// ...and can continue like nothing happened.
+						
+						// Put the next character back into the file so
+						// we get it back when we next loop around. In my
+						// opinion, this is more solid than using a goto.
+						ungetc(nextChar, subject);
 					} else { // no match found
+						// Clear match buffer, and start over next loop.
 						growstr_clear(&matchString);
+						
+						// Also, update "new word" indicator since the
+						// character that didn't match still could possibly
+						// be a space / not a space.
 						newWord = isspace(nextChar);
-						// and eat characters until next space!
 					}
 				}
 			} else if (!isspace(nextChar)) {
@@ -132,7 +150,7 @@ int main(int argc, char *argv[]) {
 	bool didOkay = true;
 	
 	if (ferror(subject)) {
-		printf("Oops! Something bad happened while reading the file.\n");
+		fprintf(stderr, "Oops! Something bad happened while reading the file.\n");
 		didOkay = false;
 	}
 	

@@ -97,13 +97,6 @@ void growstr_snipstart(GrowString *g, size_t start) {
 	// thats probably fine
 }
 
-// oops just strchr..
-// ptrdiff_t growstr_indexof(GrowString *g, char c, size_t start) {
-// 	for (size_t i = start; i < g->length; i++)
-// 		if (g->data[i] == c) return i;
-// 	return -1;
-// }
-
 // (if i had my way, it'd be bool (*fn)(char) not int (*fn)(int) ...)
 ptrdiff_t growstr_indexofpredicate(GrowString *g, int (*fn)(int), size_t start) {
 	for (size_t i = start; i < g->length; i++)
