@@ -87,7 +87,7 @@ int main() {
 }
 ```
 
-Hooray for indirection! Sorry if this is too many words, I wrote out my *entire* thought process.
+Hooray for indirection! Sorry if this is too many words and not much meaning per word, I wrote out my *entire* thought process.
 
 ## Question 2
 
@@ -434,12 +434,6 @@ int main(int argc, char *argv[]) {
 
 ## Question 4
 
-<!-- # (Nightmare syntax for specifying multiple lines.)
-# cat <<-THE_TEXT_FILE > small_text_file.txt
-# 	Hello, world!
-# 	I am a small text file!
-# THE_TEXT_FILE -->
-
 ```bash
 # Create the file.
 printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
@@ -459,9 +453,180 @@ mkdir my_text_files
 mv small_text_file.txt another_text_file.txt my_text_files
 ```
 
+## Question 5 - TODO
+
+## Question 6
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+	for (size_t i = 0; i < argc; i++)
+		printf("%s\n", argv[i]);
+	
+	return EXIT_SUCCESS;
+}
+```
+
 ## Question 9 - TODO
 
-the real challenge here is to remember what the numbers in each man page entry's name mean
+Because I constantly forget what the section numbers mean, I'm gonna first run `man man` and copy down just that.
+
+```
+$ man man
+```
+```stdout
+Man: find all matching manual pages (set MAN_POSIXLY_CORRECT to avoid this)
+ * man (1)
+   man (7mp)
+   man (1p)
+Man: What manual page do you want?
+Man: _
+```
+
+Augh. Annoying.
+
+```stdout
+Man: 1
+```
+
+And here's the relevant passage:
+
+> The table below shows the <u>section</u> numbers of the manual followed by the types of pages they contain.
+>
+> <table>
+> <tbody>
+> <tr><td>0<td>Header files (usually found in <u>/usr/include</u>)
+> <tr><td>1<td>Executable programs or shell commands
+> <tr><td>2<td>System calls (functions provided by the kernel)
+> <tr><td>3<td>Library calls (functions within program libraries)
+> <tr><td>4<td>Special files (usually found in <u>/dev</u>)
+> <tr><td>5<td>File formats and conventions, e.g. <u>/etc/passwd</u>
+> <tr><td>6<td>Games
+> <tr><td>7<td>Miscellaneous (including macro packages and conventions), e.g. <b>man</b>(7), <b>groff</b>(7), <b>man-pages</b>(7)
+> <tr><td>8<td>System administration commands (usually only for root)
+> <tr><td>9<td>Kernel routines [Non standard]
+> </table>
+
+Hmm, and it seems stuff like `1p` means "the POSIX standardized version of this", which can sometimes greatly differ from the thing you have on your computer. For example, `echo` accepts a much smaller set of arguments in the POSIX standard. (GNU developers really like their extensions to C and the shell...)
+
+### `cat`
+
+`cat` is a shell command, so it'll be under section 1.
+
+```
+$ MAN_POSIXLY_CORRECT=0 man cat.1
+```
+<pre style="font-family:'Iosevka',monospace;">CAT(1)                           User Commands                          CAT(1)
+
+<b>NAME</b>
+       cat - concatenate files and print on the standard output
+
+<b>SYNOPSIS</b>
+       <b>cat </b>[<u>OPTION</u>]... [<u>FILE</u>]...
+
+<b>DESCRIPTION</b>
+       Concatenate FILE(s) to standard output.
+
+       With no FILE, or when FILE is -, read standard input.
+
+       <b>-A</b>, <b>--show-all</b>
+              equivalent to <b>-vET</b>
+
+       <b>-b</b>, <b>--number-nonblank</b>
+              number nonempty output lines, overrides <b>-n</b>
+
+       <b>-e     </b>equivalent to <b>-vE</b>
+
+       <b>-E</b>, <b>--show-ends</b>
+              display $ at end of each line
+
+       <b>-n</b>, <b>--number</b>
+              number all output lines
+
+       <b>-s</b>, <b>--squeeze-blank</b>
+              suppress repeated empty output lines
+<span style="background:white;color:black;"> Manual page cat(1) line 1 (press h for help or q to quit)</span>
+</pre>
+
+### `printf`
+
+While `printf` can also be a shell command, we're talking about the C function. This means it'll be under section 3, "Library Calls".
+
+```
+$ MAN_POSIXLY_CORRECT=0 man printf.3
+```
+<pre style="font-family:'Iosevka',monospace;">printf(3)                  Library Functions Manual                  printf(3)
+
+<b>NAME</b>
+       printf,  fprintf,  dprintf,  sprintf,  snprintf, vprintf, vfprintf, vd-
+       printf, vsprintf, vsnprintf - formatted output conversion
+
+<b>LIBRARY</b>
+       Standard C library (<u>libc</u>, <u>-lc</u>)
+
+<b>SYNOPSIS</b>
+       <b>#include &lt;stdio.h&gt;</b>
+
+       <b>int printf(const char *restrict </b><u>format</u><b>, ...);</b>
+       <b>int fprintf(FILE *restrict </b><u>stream</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
+       <b>int dprintf(int </b><u>fd</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
+       <b>int sprintf(char *restrict </b><u>str</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
+       <b>int snprintf(char </b><u>str</u><b>[restrict .</b><u>size</u><b>], size_t </b><u>size</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
+
+       <b>int vprintf(const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+       <b>int vfprintf(FILE *restrict </b><u>stream</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+       <b>int vdprintf(int </b><u>fd</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+       <b>int vsprintf(char *restrict </b><u>str</u><b>,</b>
+                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+<span style="background:white;color:black"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
+</pre>
+
+### `write`
+
+And finally, `write`, the system call. This means it'll be in section 2.
+
+```
+$ man write.2
+```
+<pre style="font-family:'Iosevka',monospace;">write(2)                      System Calls Manual                     write(2)
+
+<b>NAME</b>
+       write - write to a file descriptor
+
+<b>LIBRARY</b>
+       Standard C library (<u>libc</u>, <u>-lc</u>)
+
+<b>SYNOPSIS</b>
+       <b>#include &lt;unistd.h&gt;</b>
+
+       <b>ssize_t write(int </b><u>fd</u><b>, const void </b><u>buf</u><b>[.</b><u>count</u><b>], size_t </b><u>count</u><b>);</b>
+
+<b>DESCRIPTION</b>
+       <b>write</b>() writes up to <u>count</u> bytes from the buffer starting at <u>buf</u> to the
+       file referred to by the file descriptor <u>fd</u>.
+
+       The number of bytes written may be less than  <u>count</u>  if,  for  example,
+       there  is  insufficient space on the underlying physical medium, or the
+       <b>RLIMIT_FSIZE </b>resource limit is encountered (see <b>setrlimit</b>(2)),  or  the
+       call was interrupted by a signal handler after having written less than
+       <u>count</u> bytes.  (See also <b>pipe</b>(7).)
+
+       For a seekable file (i.e., one to which <b>lseek</b>(2) may  be  applied,  for
+       example,  a  regular  file) writing takes place at the file offset, and
+       the file offset is incremented by the number of bytes actually written.
+       If  the  file was <b>open</b>(2)ed with <b>O_APPEND</b>, the file offset is first set
+       to the end of the file before writing.  The adjustment of the file off-
+       set and the write operation are performed as an atomic step.
+<span style="background:white;color:black"> Manual page write(2) line 1 (press h for help or q to quit)</span>
+</pre>
 
 ## Question 10
 
