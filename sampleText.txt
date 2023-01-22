@@ -1,0 +1,17 @@
+(From Wikipedia, the Free Encyclopedia)
+
+The C Programming Language (sometimes termed K&R, after its authors' initials) is a computer programming book written by Brian Kernighan and Dennis Ritchie, the latter of whom originally designed and implemented the language, as well as co-designed the Unix operating system with which development of the language was closely intertwined. The book was central to the development and popularization of the C programming language and is still widely read and used today. Because the book was co-authored by the original language designer, and because the first edition of the book served for many years as the de facto standard for the language, the book was regarded by many to be the authoritative reference on C.
+
+C was created by Dennis Ritchie at Bell Labs in the early 1970s as an augmented version of Ken Thompson's B. Another Bell Labs employee, Brian Kernighan, had written the first C tutorial, and he persuaded Ritchie to coauthor a book on the language. Kernighan would write most of the book's "expository" material, and Ritchie's reference manual became its appendices.
+
+The first edition, published February 22, 1978, was the first widely available book on the C programming language. Its version of C is sometimes termed K&R C (after the book's authors), often to distinguish this early version from the later version of C standardized as ANSI C.
+
+In April 1988, the second edition of the book was published, updated to cover the changes to the language resulting from the then-new ANSI C standard, particularly with the inclusion of reference material on standard libraries. The second edition of the book (and as of 2022, the most recent) has since been translated into over 20 languages. In 2012, an eBook version of the second edition was published in ePub, Mobi, and PDF formats.
+
+ANSI C, first standardized in 1989 (as ANSI X3.159-1989), has since undergone several revisions, the most recent of which is ISO/IEC 9899:2018 (also termed C17 or C18), adopted as an ANSI standard in June 2018. However, no new edition of The C Programming Language has been issued to cover the more recent standards. 
+
+Brian Kernighan and Dennis Ritchie are quoted as saying "Supercalifragilistic expialidocious. More people have been inside the CS building than I have. The quick brown fox jumps over the lazy dog." When asked how this relates to C, they responded with "Well, this whole paragraph isn't real. [[V Wheatley]] (red link) is just trying to write some funny stuff."
+
+ab ab ac ad
+
+thin
