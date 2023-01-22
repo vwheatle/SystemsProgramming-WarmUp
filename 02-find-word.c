@@ -5,7 +5,7 @@
 #include <string.h> // -> strlen
 #include <ctype.h> // -> isspace
 
-#include "growArray.h"
+#include "growString.h"
 
 #define MAX_SEARCH_LEN 128
 
@@ -13,7 +13,7 @@ bool startsWith(const char *s, const char *start) {
 	while (*s != '\0' && *start != '\0')
 		if (*(s++) != *(start++)) return false;
 	
-	// only successful if start was the one that ended first.
+	// only successful if `start` was the one that ended first.
 	return *start == '\0';
 }
 
@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
 					
 					ptrdiff_t nextSpace = 0; // don't start at 0, we just
 					// checked if the string matched starting there. it didn't.
+					// (if you're wondering why it's set to 0, see this line: )
 					while ((nextSpace = growstr_indexofpredicate(&matchString, isspace, nextSpace + 1)) >= 0)
 						if (startsWith(searchString.data, &matchString.data[nextSpace + 1]))
 							break;

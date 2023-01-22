@@ -40,6 +40,8 @@ GrowString growstr_from_cstr(char *s, size_t capacity) {
 	return g;
 }
 
+// Return a new GrowString, one which points to a clone of
+// the provided other GrowString.
 GrowString growstr_clone(GrowString *other) {
 	GrowString g;
 	g.data = calloc(other->capacity, sizeof(char));
@@ -56,10 +58,11 @@ void growstr_destroy(GrowString *g) {
 	free(g->data);
 	g->data = NULL; // if freed, nothing happens.
 	g->length = 0;
-	g->capacity = 1; // eeeeeeeeeeeeeh.. it works?
+	g->capacity = 1; // capacity needs its null byte space..
 }
 
 // Clear the string, leaving the container full of zeroes.
+// This does not shrink or free the container.
 void growstr_clear(GrowString *g) {
 	memset(g->data, 0, sizeof(char) * g->length);
 	g->length = 0;
@@ -71,17 +74,25 @@ void growstr_clear(GrowString *g) {
 void growstr_grow(GrowString *g, size_t newCapacity) {
 	if (newCapacity <= g->length) return;
 	
-	// TODO: better thing to use
-	// char *nextData = realloc(g->data, sizeof(char) * newCapacity);
+	char *nextData = realloc(g->data, sizeof(char) * newCapacity);
 	
-	char *nextData = calloc(newCapacity, sizeof(char));
-	memcpy(nextData, g->data, g->length);
-	free(g->data);
+	// I wish there was recalloc...
+	// Instead, I have to manually zero the new memory.
+	// Also, since we allow shrinking, I have to make sure this is signed.
+	ptrdiff_t remain = newCapacity - g->capacity;
+	if (remain > 0) memset(&nextData[g->capacity], 0, sizeof(char) * remain);
+	
+	// char *nextData = calloc(newCapacity, sizeof(char));
+	// memcpy(nextData, g->data, g->length);
+	// free(g->data);
+	
 	g->data = nextData;
 	g->capacity = newCapacity;
 }
 // (the function name sounds like you're cheering it on...)
 
+// Erase the front of the string up to but not including `start`.
+// This will shift all unerased characters back.
 void growstr_snipstart(GrowString *g, size_t start) {
 	if (start >= g->length) return growstr_clear(g);
 	
@@ -92,11 +103,14 @@ void growstr_snipstart(GrowString *g, size_t start) {
 	g->length = remain;
 	
 	// [ a b >c< 0 ] snip to 2 (len: 3; remain: 3-2=1)
-	// [ c<< b c 0 ] move 
-	// [ c >0 0< 0 ] set
-	// thats probably fine
+	// [ c<< b c 0 ] move remainder of string to front
+	// [ c >0 0< 0 ] fill with 0s after moved region, length: (length - remain)
+	// thats [sic] probably fine
 }
 
+// Return the index of the first char that satisfies the predicate.
+// (It should return a boolean value, but unfortunately it's unsafe to
+//  pass in isspace unless I make it awkwardly cast to and from an int...)
 // (if i had my way, it'd be bool (*fn)(char) not int (*fn)(int) ...)
 ptrdiff_t growstr_indexofpredicate(GrowString *g, int (*fn)(int), size_t start) {
 	for (size_t i = start; i < g->length; i++)
