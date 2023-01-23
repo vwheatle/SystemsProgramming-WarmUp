@@ -9,7 +9,9 @@ cat small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.
 
 # Count number of characters and words.
 # ( -m : characters; -w : words )
+echo "small_text_file.txt: (characters; words)"
 wc -mw small_text_file.txt
+echo "another_text_file.txt: (characters; words)"
 wc -mw another_text_file.txt
 
 # Create a directory.

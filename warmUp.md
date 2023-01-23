@@ -91,6 +91,8 @@ Hooray for indirection! Sorry if this is too many words and not much meaning per
 
 ## Question 2
 
+> Write a C program that reads a text file and prints out any words that begin with a user-given string. The filename should be given at the command line as an argument. The program should prompt the user for the search string. The program should then read the file one word at a time and print(?) out the word if its first N bytes match the search string, where N is the length of the search string.
+
 I wrote a growable string library for this.
 
 ### `growArray.h`
@@ -424,6 +426,8 @@ int main(int argc, char *argv[]) {
 
 ## Question 3
 
+> Explain the purpose of the `ls`, `cat`, `rm`, `cp`, `mv`, `mkdir`, and `cc` Unix commands.
+
 - `ls` prints a list of all files in the current working directory.
 - `cat` outputs the entirety of a specified file into stdout. (Its name is meant to be short for "concatenate" -- as you can specify more than one file, and it will print all of them in order.)
 - `rm` removes (deletes) a specified file. If you want, it can also recursively delete entire folder structures, files included!
@@ -434,6 +438,8 @@ int main(int argc, char *argv[]) {
 
 ## Question 4
 
+> Using your favorite editor, create a small text file. Use `cat` to create another file consisting of five repetitions of this small text file. Use `wc` to count the number of characters and words in the original file and in the one you made from it. Explain the result. Create a subdirectory and move the two files into it.
+
 ```bash
 # Create the file.
 printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
@@ -443,7 +449,9 @@ cat small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.
 
 # Count number of characters and words.
 # ( -m : characters; -w : words )
+echo "small_text_file.txt: (characters; words)"
 wc -mw small_text_file.txt
+echo "another_text_file.txt: (characters; words)"
 wc -mw another_text_file.txt
 
 # Create a directory.
@@ -454,6 +462,8 @@ mv small_text_file.txt another_text_file.txt my_text_files
 ```
 
 ## Question 5
+
+> Write, compile, and execute a C program that prints a welcoming message of your choice.
 
 Decided to display every color because it's neat.
 
@@ -483,6 +493,8 @@ int main() {
 
 ## Question 6
 
+> Write, compile, and execute a C program that prints its arguments.
+
 ```c
 #include <stdlib.h>
 #include <stdio.h>
@@ -496,6 +508,8 @@ int main(int argc, char *argv[]) {
 ```
 
 ## Question 7
+
+> Using `getchar()`, write a program that counts the number of words, lines, and characters in its input.
 
 Affectionately calling this "bathroom", because it's an alternative to `wc`.
 
@@ -539,7 +553,22 @@ int main() {
 }
 ```
 
+And yeah, the way I count lines is like `wc`. If the input doesn't have a trailing newline (like most inputs should) then my program reports "0 lines". This is probably fine.
+
+```
+$ echo "Hello, world!" | ./bathroom  # echo adds a trailing newline
+14 characters
+2 words
+1 lines
+$ printf "Hello, world!" | ./bathroom  # printf doesn't add a trailing newline
+13 characters
+2 words
+0 lines
+```
+
 ## Question 8
+
+> Create a file containing a C function that prints the message "Hello, world!". Create a separate file containing the main program which calls this function. Compile and link the resulting program, calling it `hw`.
 
 I'm a bit of a newbie to this kinda stuff. At the very least I now know about `gcc -c` (to make an object without immediately linking and turning it into an executable) and `objdump` (to inspect an object file's contents, here using `-t` to filter to just the symbol list inside the object file).
 
@@ -588,6 +617,12 @@ Hello, world!
 
 ## Question 9
 
+> Look up the entries for the following topics in your system's manual:
+>
+> - the `cat` command
+> - the `printf` function
+> - the `write` system call
+
 Because I constantly forget what the section numbers mean, I'm gonna first run `man man` and copy down just that.
 
 ```
@@ -635,37 +670,37 @@ Hmm, and it seems stuff like `1p` means "the POSIX standardized version of this"
 ```
 $ MAN_POSIXLY_CORRECT=0 man cat.1
 ```
-<pre style="font-family:'Iosevka',monospace;">CAT(1)                           User Commands                          CAT(1)
-
-<b>NAME</b>
-       cat - concatenate files and print on the standard output
-
-<b>SYNOPSIS</b>
-       <b>cat </b>[<u>OPTION</u>]... [<u>FILE</u>]...
-
-<b>DESCRIPTION</b>
-       Concatenate FILE(s) to standard output.
-
-       With no FILE, or when FILE is -, read standard input.
-
-       <b>-A</b>, <b>--show-all</b>
-              equivalent to <b>-vET</b>
-
-       <b>-b</b>, <b>--number-nonblank</b>
-              number nonempty output lines, overrides <b>-n</b>
-
-       <b>-e     </b>equivalent to <b>-vE</b>
-
-       <b>-E</b>, <b>--show-ends</b>
-              display $ at end of each line
-
-       <b>-n</b>, <b>--number</b>
-              number all output lines
-
-       <b>-s</b>, <b>--squeeze-blank</b>
-              suppress repeated empty output lines
-<span style="background:white;color:black;"> Manual page cat(1) line 1 (press h for help or q to quit)</span>
-</pre>
+> <pre style="font-family:'Iosevka',monospace;">CAT(1)                           User Commands                          CAT(1)
+>
+> <b>NAME</b>
+>        cat - concatenate files and print on the standard output
+>
+> <b>SYNOPSIS</b>
+>        <b>cat </b>[<u>OPTION</u>]... [<u>FILE</u>]...
+>
+> <b>DESCRIPTION</b>
+>        Concatenate FILE(s) to standard output.
+>
+>        With no FILE, or when FILE is -, read standard input.
+>
+>        <b>-A</b>, <b>--show-all</b>
+>               equivalent to <b>-vET</b>
+>
+>        <b>-b</b>, <b>--number-nonblank</b>
+>               number nonempty output lines, overrides <b>-n</b>
+>
+>        <b>-e     </b>equivalent to <b>-vE</b>
+>
+>        <b>-E</b>, <b>--show-ends</b>
+>               display $ at end of each line
+>
+>        <b>-n</b>, <b>--number</b>
+>               number all output lines
+>
+>        <b>-s</b>, <b>--squeeze-blank</b>
+>               suppress repeated empty output lines
+> <span style="background:white;color:black;"> Manual page cat(1) line 1 (press h for help or q to quit)</span>
+> </pre>
 
 ### `printf`
 
@@ -674,37 +709,37 @@ While `printf` can also be a shell command, we're talking about the C function. 
 ```
 $ MAN_POSIXLY_CORRECT=0 man printf.3
 ```
-<pre style="font-family:'Iosevka',monospace;">printf(3)                  Library Functions Manual                  printf(3)
-
-<b>NAME</b>
-       printf,  fprintf,  dprintf,  sprintf,  snprintf, vprintf, vfprintf, vd-
-       printf, vsprintf, vsnprintf - formatted output conversion
-
-<b>LIBRARY</b>
-       Standard C library (<u>libc</u>, <u>-lc</u>)
-
-<b>SYNOPSIS</b>
-       <b>#include &lt;stdio.h&gt;</b>
-
-       <b>int printf(const char *restrict </b><u>format</u><b>, ...);</b>
-       <b>int fprintf(FILE *restrict </b><u>stream</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
-       <b>int dprintf(int </b><u>fd</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
-       <b>int sprintf(char *restrict </b><u>str</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
-       <b>int snprintf(char </b><u>str</u><b>[restrict .</b><u>size</u><b>], size_t </b><u>size</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, ...);</b>
-
-       <b>int vprintf(const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
-       <b>int vfprintf(FILE *restrict </b><u>stream</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
-       <b>int vdprintf(int </b><u>fd</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
-       <b>int vsprintf(char *restrict </b><u>str</u><b>,</b>
-                   <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
-<span style="background:white;color:black"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
-</pre>
+> <pre style="font-family:'Iosevka',monospace;">printf(3)                  Library Functions Manual                  printf(3)
+>
+> <b>NAME</b>
+>        printf,  fprintf,  dprintf,  sprintf,  snprintf, vprintf, vfprintf, vd-
+>        printf, vsprintf, vsnprintf - formatted output conversion
+>
+> <b>LIBRARY</b>
+>        Standard C library (<u>libc</u>, <u>-lc</u>)
+>
+> <b>SYNOPSIS</b>
+>        <b>#include &lt;stdio.h&gt;</b>
+>
+>        <b>int printf(const char *restrict </b><u>format</u><b>, ...);</b>
+>        <b>int fprintf(FILE *restrict </b><u>stream</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, ...);</b>
+>        <b>int dprintf(int </b><u>fd</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, ...);</b>
+>        <b>int sprintf(char *restrict </b><u>str</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, ...);</b>
+>        <b>int snprintf(char </b><u>str</u><b>[restrict .</b><u>size</u><b>], size_t </b><u>size</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, ...);</b>
+>
+>        <b>int vprintf(const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+>        <b>int vfprintf(FILE *restrict </b><u>stream</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+>        <b>int vdprintf(int </b><u>fd</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+>        <b>int vsprintf(char *restrict </b><u>str</u><b>,</b>
+>                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
+> <span style="background:white;color:black"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
+> </pre>
 
 ### `write`
 
@@ -713,50 +748,50 @@ And finally, `write`, the system call. This means it'll be in section 2.
 ```
 $ man write.2
 ```
-<pre style="font-family:'Iosevka',monospace;">write(2)                      System Calls Manual                     write(2)
-
-<b>NAME</b>
-       write - write to a file descriptor
-
-<b>LIBRARY</b>
-       Standard C library (<u>libc</u>, <u>-lc</u>)
-
-<b>SYNOPSIS</b>
-       <b>#include &lt;unistd.h&gt;</b>
-
-       <b>ssize_t write(int </b><u>fd</u><b>, const void </b><u>buf</u><b>[.</b><u>count</u><b>], size_t </b><u>count</u><b>);</b>
-
-<b>DESCRIPTION</b>
-       <b>write</b>() writes up to <u>count</u> bytes from the buffer starting at <u>buf</u> to the
-       file referred to by the file descriptor <u>fd</u>.
-
-       The number of bytes written may be less than  <u>count</u>  if,  for  example,
-       there  is  insufficient space on the underlying physical medium, or the
-       <b>RLIMIT_FSIZE </b>resource limit is encountered (see <b>setrlimit</b>(2)),  or  the
-       call was interrupted by a signal handler after having written less than
-       <u>count</u> bytes.  (See also <b>pipe</b>(7).)
-
-       For a seekable file (i.e., one to which <b>lseek</b>(2) may  be  applied,  for
-       example,  a  regular  file) writing takes place at the file offset, and
-       the file offset is incremented by the number of bytes actually written.
-       If  the  file was <b>open</b>(2)ed with <b>O_APPEND</b>, the file offset is first set
-       to the end of the file before writing.  The adjustment of the file off-
-       set and the write operation are performed as an atomic step.
-<span style="background:white;color:black"> Manual page write(2) line 1 (press h for help or q to quit)</span>
-</pre>
+> <pre style="font-family:'Iosevka',monospace;">write(2)                      System Calls Manual                     write(2)
+>
+> <b>NAME</b>
+>        write - write to a file descriptor
+>
+> <b>LIBRARY</b>
+>        Standard C library (<u>libc</u>, <u>-lc</u>)
+>
+> <b>SYNOPSIS</b>
+>        <b>#include &lt;unistd.h&gt;</b>
+>
+>        <b>ssize_t write(int </b><u>fd</u><b>, const void </b><u>buf</u><b>[.</b><u>count</u><b>], size_t </b><u>count</u><b>);</b>
+>
+> <b>DESCRIPTION</b>
+>        <b>write</b>() writes up to <u>count</u> bytes from the buffer starting at <u>buf</u> to the
+>        file referred to by the file descriptor <u>fd</u>.
+>
+>        The number of bytes written may be less than  <u>count</u>  if,  for  example,
+>        there  is  insufficient space on the underlying physical medium, or the
+>        <b>RLIMIT_FSIZE </b>resource limit is encountered (see <b>setrlimit</b>(2)),  or  the
+>        call was interrupted by a signal handler after having written less than
+>        <u>count</u> bytes.  (See also <b>pipe</b>(7).)
+>
+>        For a seekable file (i.e., one to which <b>lseek</b>(2) may  be  applied,  for
+>        example,  a  regular  file) writing takes place at the file offset, and
+>        the file offset is incremented by the number of bytes actually written.
+>        If  the  file was <b>open</b>(2)ed with <b>O_APPEND</b>, the file offset is first set
+>        to the end of the file before writing.  The adjustment of the file off-
+>        set and the write operation are performed as an atomic step.
+> <span style="background:white;color:black"> Manual page write(2) line 1 (press h for help or q to quit)</span>
+> </pre>
 
 ## Question 10
 
 > Write a function that computes some basic statistics for a list of numbers and stores those results in fields of a struct. In particular, given this definition...
-
-```c
-struct numlist {
-	float *list; // list of floats.
-	int len; // number of items in list.
-	float min, max, avg; // guess.
-};
-```
-
+>
+> ```c
+> struct numlist {
+> 	float *list; // list of floats.
+> 	int len; // number of items in list.
+> 	float min, max, avg; // statistics.
+> };
+> ```
+>
 > ...write a function `compute_stats(struct numlist *listptr)`, which takes a list that already has the `->list` and `->len` fields populated.
 
 ```c
@@ -785,14 +820,3 @@ void compute_stats(struct numlist *listptr) {
 ok
 
 >
-
-# note tho  slef
-
-So. Pipes. and accepting data from `stdin`. Pipes actually do communicate the flags
-uh.
-
-noo um actually there's like. you can close stdout, and that's a signal to anyone listening (i.e. their stdin is your stdout) to stop. because the file has an EOF signal now, etc..
-
-and the main point of confusion is when i use a tool that reads from stdin and i type some stuff and i have to press ctrl+d to stop.. like how do program say ctrl+d?? EOF?? but if it's an in-band magic byte then it'd fuck up !!
-
-so the answer is just that. they need to call linux `close` with their stdout file descriptor to say "that's it, tthat's the  output". and this also happens automatically when a program closes. so it works real well real efficient!!! so cool!
