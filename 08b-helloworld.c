@@ -1,8 +1,6 @@
 #include <stdlib.h>
-#include <stdio.h>
 
-// #include "libhelloworld.h"
-#include "08a-libhelloworld.h"
+extern void sayHelloWorld();
 
 int main() {
 	sayHelloWorld();

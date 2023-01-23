@@ -453,7 +453,20 @@ mkdir my_text_files
 mv small_text_file.txt another_text_file.txt my_text_files
 ```
 
-## Question 5 - TODO
+## Question 5
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+
+int main() {
+	// 5: Blink; 92: Bright Green text color.
+	// `man console_codes` for info
+	printf("\033[5;92mTODO: Put an interesting text string here.\033[0m\n");
+	
+	return EXIT_SUCCESS;
+}
+```
 
 ## Question 6
 
@@ -469,7 +482,54 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-## Question 9 - TODO
+## Question 8
+
+I'm a bit of a newbie to this kinda stuff. At the very least I now know about `gcc -c` (to make an object without immediately linking and turning it into an executable) and `objdump` (to inspect an object file's contents, here using `-t` to filter to just the symbol list inside the object file).
+
+### `08a-libhelloworld.c`
+
+```c
+#include <stdio.h>
+
+void sayHelloWorld() {
+	printf("Hello, world!\n");
+}
+```
+
+```
+$ gcc -c -Wall -Werror -o libhelloworld.o 08a-libhelloworld.c
+$ objdump -t libhelloworld.o | grep "sayHelloWorld"
+0000000000000000 g     F .text	0000000000000011 sayHelloWorld
+```
+
+All those letters and numbers outputted by `objdump` mean so much to me and I am not scared at all.
+
+Anyway, that's the object containing the `sayHelloWorld` symbol... now for the program that'll use it!
+
+### `08b-helloworld.c`
+
+```c
+#include <stdlib.h>
+
+extern void sayHelloWorld();
+
+int main() {
+	sayHelloWorld();
+	return EXIT_SUCCESS;
+}
+```
+
+And I'm using an `extern` declaration here to say "this function should not be expected to be present in this program, and you gotta link it in from somewhere else!"
+
+```
+$ gcc -Wall -Werror -o ./hw libhelloworld.o 08b-helloworld.c
+$ ./hw
+Hello, world!
+```
+
+...And it works!
+
+## Question 9
 
 Because I constantly forget what the section numbers mean, I'm gonna first run `man man` and copy down just that.
 
