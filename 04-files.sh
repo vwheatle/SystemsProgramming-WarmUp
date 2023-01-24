@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 set -euo pipefail
 
 # Create the file.
@@ -8,11 +8,9 @@ printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
 cat small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt > another_text_file.txt
 
 # Count number of characters and words.
-# ( -m : characters; -w : words )
-echo "small_text_file.txt: (characters; words)"
-wc -mw small_text_file.txt
-echo "another_text_file.txt: (characters; words)"
-wc -mw another_text_file.txt
+# ( -w : words; -m : characters )
+wc -wm small_text_file.txt
+wc -wm another_text_file.txt
 
 # Create a directory.
 mkdir my_text_files

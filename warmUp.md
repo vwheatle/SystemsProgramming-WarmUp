@@ -7,7 +7,9 @@ Systems Programming
 
 > In the following code, the first `printf` reached produces the output "14", but the second `printf` can cause a bus error / segmentation fault. Why?
 
-Before I answer -- I've gone through and formatted the program to my liking. The functionality should be the same (it still segfaults) but now it's clearer where problems lie, thanks to the code having space to breathe.
+Before I answered, I went through and formatted the program to my liking. The functionality should be the same (it still segfaults) but now it's clearer where problems lie, because I've annotated a few oddities.
+
+### `01a-segfault.c`
 
 ```c
 #include <stdlib.h>
@@ -56,7 +58,11 @@ What the program really does:
 - and `funct` returns, losing the reference to the heap-stored integer and leaking memory.
 - finally, `main` tries to dereference its still-not-actually-initialized pointer and segfaults and dies.
 
-Even if we passed a pointer to the local integer pointer by writing `funct(&p)`, this wouldn't be enough -- we still need to update the types to indicate that we're passing a pointer to a pointer to a thing. Convoluted!
+Even if we passed a pointer to the local integer pointer by writing `funct(&p)`, this wouldn't be enough &mdash; we still need to update the types to indicate that we're passing a pointer to a pointer to a thing. Convoluted!
+
+Anyway, onto a fixed version.
+
+### `01b-fix.c`
 
 ```c
 #include <stdlib.h>
@@ -96,6 +102,7 @@ Hooray for indirection! Sorry if this is too many words and not much meaning per
 I wrote a growable string library for this.
 
 ### `growArray.h`
+
 ```c
 #include <stddef.h> // -> size_t, ptrdiff_t
 #include <stdlib.h> // -> malloc, free
@@ -257,7 +264,8 @@ char growstr_pop(GrowString *g) {
 }
 ```
 
-### `main.c`
+### `02-find-word.c`
+
 ```c
 #include <stdlib.h> // -> EXIT_*, malloc
 #include <stdio.h> // -> printf, File I/O
@@ -424,12 +432,27 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+```
+$ gcc -Wall -Werror -o ./find-word 02-find-word.c
+$ ./find-word sampleText.txt
+Enter search string: C
+C
+C
+C.
+[ and so on ]
+C17
+C18),
+C
+CS
+C,
+```
+
 ## Question 3
 
 > Explain the purpose of the `ls`, `cat`, `rm`, `cp`, `mv`, `mkdir`, and `cc` Unix commands.
 
 - `ls` prints a list of all files in the current working directory.
-- `cat` outputs the entirety of a specified file into stdout. (Its name is meant to be short for "concatenate" -- as you can specify more than one file, and it will print all of them in order.)
+- `cat` outputs the entirety of a specified file into stdout. (Its name is meant to be short for "concatenate" &mdash; as you can specify more than one file, and it will print all of them in order.)
 - `rm` removes (deletes) a specified file. If you want, it can also recursively delete entire folder structures, files included!
 - `cp` copies a specified file or folder structure to a destination.
 - `mv` is like `cp` but it moves files to the destination instead of copying. It also renames them! That's written as if you're moving a file from its old name to its new name.
@@ -440,7 +463,12 @@ int main(int argc, char *argv[]) {
 
 > Using your favorite editor, create a small text file. Use `cat` to create another file consisting of five repetitions of this small text file. Use `wc` to count the number of characters and words in the original file and in the one you made from it. Explain the result. Create a subdirectory and move the two files into it.
 
+### `04-files.sh`
+
 ```bash
+#!/bin/bash
+set -euo pipefail
+
 # Create the file.
 printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
 
@@ -448,11 +476,9 @@ printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
 cat small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt > another_text_file.txt
 
 # Count number of characters and words.
-# ( -m : characters; -w : words )
-echo "small_text_file.txt: (characters; words)"
-wc -mw small_text_file.txt
-echo "another_text_file.txt: (characters; words)"
-wc -mw another_text_file.txt
+# ( -w : words; -m : characters )
+wc -wm small_text_file.txt
+wc -wm another_text_file.txt
 
 # Create a directory.
 mkdir my_text_files
@@ -461,11 +487,19 @@ mkdir my_text_files
 mv small_text_file.txt another_text_file.txt my_text_files
 ```
 
+```
+$ ./04-files.sh
+ 8 38 small_text_file.txt
+ 40 190 another_text_file.txt
+```
+
+And yeah, the result of the `wc` commands were kinda surprising to me for a moment &mdash; I had `wc -mw <file>` written for a bit, but it turns out that the order of the single-letter arguments is not respected, and it always prints them in a specific order! It'll always print the number of words first, then the number of characters. Thankfully, this is documented in its manual page.
+
 ## Question 5
 
 > Write, compile, and execute a C program that prints a welcoming message of your choice.
 
-Decided to display every color because it's neat.
+### `05-welcome.c`
 
 ```c
 #include <stdlib.h>
@@ -476,24 +510,21 @@ int main() {
 	// `man console_codes` for info
 	printf("\033[5;92mTODO: Put an interesting text string here.\033[0m\n");
 	
-	for (int jb = 0; jb < 2; jb++)
-	for (int j = 0; j < 8; j++) {
-		for (int ib = 0; ib < 2; ib++)
-		for (int i = 0; i < 8; i++) {
-			int fg = (!ib) ? (i + 30) : (i +  90);
-			int bg = (!jb) ? (j + 40) : (j + 100);
-			printf("\033[%d;%dm.▄█", fg, bg);
-		}
-		printf("\033[0m\n");
-	}
-	
 	return EXIT_SUCCESS;
 }
+```
+
+```
+$ gcc -Wall -Werror -o ./welcome 05-welcome.c
+$ ./welcome
+TODO: Put an interesting text string here.
 ```
 
 ## Question 6
 
 > Write, compile, and execute a C program that prints its arguments.
+
+### `06-echo.c`
 
 ```c
 #include <stdlib.h>
@@ -507,11 +538,22 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+```
+$ gcc -Wall -Werror -o ./my-echo 06-echo.c
+$ ./my-echo a b c
+./my-echo
+a
+b
+c
+```
+
 ## Question 7
 
 > Using `getchar()`, write a program that counts the number of words, lines, and characters in its input.
 
 Affectionately calling this "bathroom", because it's an alternative to `wc`.
+
+### `07-bathroom.c`
 
 ```c
 #include <stdlib.h> // -> EXIT_*
@@ -551,6 +593,14 @@ int main() {
 	
 	return EXIT_SUCCESS;
 }
+```
+
+```
+$ gcc -Wall -Werror -o ./bathroom 07-bathroom.c
+$ cat sampleText.txt | ./bathroom
+2540 characters
+418 words
+17 lines
 ```
 
 And yeah, the way I count lines is like `wc`. If the input doesn't have a trailing newline (like most inputs should) then my program reports "0 lines". This is probably fine.

@@ -3,10 +3,11 @@
 
 // -> funct should be defined before main.
 void funct() {
-	// -> *p2 argument never actually used.
+	// -> *p2 argument immediately overwritten.
 	
 	int *p = malloc(sizeof(int));
-	// -> don't need to cast pointer type on right side, left side is enough.
+	// -> don't need to cast pointer type on right side, as
+	//    compiler already knows which type to cast malloc to.
 	// -> should use sizeof type instead of bare byte count.
 	
 	*p = 14;
