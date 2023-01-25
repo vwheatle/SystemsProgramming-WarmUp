@@ -274,6 +274,8 @@ char growstr_pop(GrowString *g) {
 #include <string.h> // -> strlen
 #include <ctype.h> // -> isspace
 
+#include <errno.h> // -> errno, perror
+
 #include "growString.h"
 
 #define MAX_SEARCH_LEN 128
@@ -324,8 +326,12 @@ int main(int argc, char *argv[]) {
 		growstr_pop(&searchString);
 	}
 	
-	// Open requested file.
-	FILE *subject = fopen(argv[1], "r");
+	// Open requested file, and check if it was opened successfully.
+	FILE *subject;
+	if ((subject = fopen(argv[1], "r")) == NULL) {
+		perror("An error occurred while opening the file");
+		exit(EXIT_FAILURE);
+	}
 	
 	// Create a string to store the contents of the file
 	// that *match* the user-specified search string.
@@ -620,7 +626,7 @@ $ printf "Hello, world!" | ./bathroom  # printf doesn't add a trailing newline
 
 > Create a file containing a C function that prints the message "Hello, world!". Create a separate file containing the main program which calls this function. Compile and link the resulting program, calling it `hw`.
 
-I'm a bit of a newbie to this kinda stuff. At the very least I now know about `gcc -c` (to make an object without immediately linking and turning it into an executable) and `objdump` (to inspect an object file's contents, here using `-t` to filter to just the symbol list inside the object file).
+I'm a bit of a newbie to this kinda stuff. At the very least I now know about `gcc -c` (to make an object without immediately linking and turning it into an executable) and ~~`objdump` (to inspect an object file's contents, here using `-t` to filter to just the symbol list inside the object file)~~ `nm` to print (the list of symbols inside an object file).
 
 ### `08a-libhelloworld.c`
 
@@ -633,12 +639,15 @@ void sayHelloWorld() {
 ```
 
 ```
-$ gcc -c -Wall -Werror -o libhelloworld.o 08a-libhelloworld.c
-$ objdump -t libhelloworld.o | grep "sayHelloWorld"
-0000000000000000 g     F .text	0000000000000011 sayHelloWorld
+$ gcc -c -Wall -Werror -o ./out/libhelloworld.o 08a-libhelloworld.c
+$ nm ./out/libhelloworld.o
+                 U puts
+0000000000000000 T sayHelloWorld
 ```
 
-All those letters and numbers outputted by `objdump` mean so much to me and I am not scared at all.
+And reading `nm`'s manual page, I know now that `U` in front of a name means it's undefined. Seeing `puts` as an undefined symbol makes sense &mdash; but it doesn't mean the program won't work, just that while linking this object, it'll need to be provided the definition for `puts`. Also, it's neat that `printf` compiles down to `puts` in this scenario!
+
+Meanwhile, our symbol `sayHelloWorld` has `T`, which means it's defined at that memory address written to the left of `T`, and it's in the text section of the object. (Sections are a familiar concept from Computer Organization, but it's unrelated here so I'll skip over it.)
 
 Anyway, that's the object containing the `sayHelloWorld` symbol... now for the program that'll use it!
 
@@ -865,8 +874,84 @@ void compute_stats(struct numlist *listptr) {
 
 ## Question 11
 
-> Note: if you are not able to do the first part, you are not prepared to take this class.
+### Part 1
 
-ok
-
+> Write a program that prints a range of lines from a text file. The program should take command line arguments of the form:
 >
+> `lrange 10 20 filename`
+>
+> ...which will print lines 10 through 20 of the named file. If there aren't enough lines in the file, the program should print what it can.
+
+#### `11a-lrange.c`
+
+```c
+#include <stdlib.h> // -> EXIT_*, malloc
+#include <stdio.h> // -> printf, File I/O
+#include <stdbool.h> // -> bool
+
+#include <string.h> // -> strlen
+
+#include <errno.h> // -> errno, perror
+
+int main(int argc, char *argv[]) {
+	if (argc < 3 || argc > 4) {
+		fprintf(stderr,
+			"Please supply arguments in the form:\n"
+			"%s <start line> <end line> <file name>\n",
+			(argc > 0) ? argv[0] : "lrange"
+		);
+		exit(EXIT_FAILURE);
+	}
+	
+	unsigned int startLine = strtoul(argv[1], NULL, 0);
+	unsigned int endLine   = strtoul(argv[2], NULL, 0);
+	
+	bool fromFile = argc == 4;
+	FILE *subject = stdin;
+	if (fromFile && (subject = fopen(argv[3], "r")) == NULL) {
+		perror("An error occurred while opening the file");
+		exit(EXIT_FAILURE);
+	}
+	
+	// Again, like in bathroom:
+	// A line is an occurrence of a line break character.
+	//  This will include empty lines, and it also means that an input without
+	//  any line breaks will have "0 lines". This is normal.
+	unsigned int currentLine = 0;
+	
+	int nextChar;
+	while ((nextChar = fgetc(subject)) != EOF) {
+		// Repeat char to stdout if within the range.
+		if (currentLine >= startLine && currentLine < endLine)
+			fputc(nextChar, stdout);
+		
+		if (nextChar == '\n') currentLine++;
+	}
+	
+	// Remember to close your file handles...
+	if (fromFile) fclose(subject);
+	
+	return EXIT_SUCCESS;
+}
+```
+
+My version is not inclusive of the end part of the line range. This can easily be changed, thankfully. As simple as changing line 32 to `if (currentLine >= startLine && currentLine <= endLine)`.
+
+```
+$ gcc -Werror -Wall -o lrange 11a-lrange.c
+$ ./lrange 6 7 sampleText.txt
+The first edition, published February 22, 1978, was the first widely available book on the C programming language. Its version of C is sometimes termed K&R C (after the book's authors), often to distinguish this early version from the later version of C standardized as ANSI C.
+```
+
+### Part 2
+
+> Write a program called `last10` that prints the last ten lines of a text file. The program can be used from the command line with:
+>
+> ```
+> last10 <filename>
+> last10
+> ```
+>
+> If no file is provided (the latter), the program processes standard input.
+
+But yeah, since it's possible to use `stdin`, `fseek`ing backwards is out of the question. This means we'll need to save our own line buffer.
