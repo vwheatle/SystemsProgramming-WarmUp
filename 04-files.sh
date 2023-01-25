@@ -13,7 +13,7 @@ wc -wm small_text_file.txt
 wc -wm another_text_file.txt
 
 # Create a directory.
-mkdir my_text_files
+mkdir -p my_text_files
 
 # Move both the files into this new directory.
 mv small_text_file.txt another_text_file.txt my_text_files
