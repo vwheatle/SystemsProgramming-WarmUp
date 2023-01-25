@@ -22,5 +22,8 @@ int main() {
 	// and that it has the value funct set.
 	printf("%d\n", *p);
 	
+	// don't cause a memory leak!!
+	free(p);
+	
 	return EXIT_SUCCESS;
 }

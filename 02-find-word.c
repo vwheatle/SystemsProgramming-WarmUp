@@ -5,6 +5,8 @@
 #include <string.h> // -> strlen
 #include <ctype.h> // -> isspace
 
+#include <errno.h> // -> errno, perror
+
 #include "growString.h"
 
 #define MAX_SEARCH_LEN 128
@@ -55,8 +57,12 @@ int main(int argc, char *argv[]) {
 		growstr_pop(&searchString);
 	}
 	
-	// Open requested file.
-	FILE *subject = fopen(argv[1], "r");
+	// Open requested file, and check if it was opened successfully.
+	FILE *subject;
+	if ((subject = fopen(argv[1], "r")) == NULL) {
+		perror("An error occurred while opening the file");
+		exit(EXIT_FAILURE);
+	}
 	
 	// Create a string to store the contents of the file
 	// that *match* the user-specified search string.
