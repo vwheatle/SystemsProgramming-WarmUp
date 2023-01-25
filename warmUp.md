@@ -1,6 +1,9 @@
 V Wheatley  
 Systems Programming
 
+<link rel="stylesheet" href="./my.css" />
+<!-- pandoc -p --lua-filter=replace.lua --output=warmUp.html warmUp.md -->
+
 # Warm-Up
 
 All this code is available as a Git repository [over at my GitHub](https://github.com/vwheatle/SystemsProgramming-WarmUp).
@@ -13,35 +16,11 @@ Before I answered, I went through and formatted the program to my liking. The fu
 
 ### `01a-segfault.c`
 
-```c
-#include <stdlib.h>
-#include <stdio.h>
-
-// -> funct should be defined before main.
-void funct(int *p2) {
-	// -> *p2 argument immediately overwritten.
-	
-	p2 = malloc(sizeof(int));
-	// -> don't need to cast pointer type on right side, as
-	//    compiler already knows which type to cast malloc to.
-	// -> should use sizeof type instead of bare byte count.
-	
-	*p2 = 14;
-	printf("%d\n", *p2);
-}
-
-int main() {
-	int *p;
-	funct(p);
-	
-	printf("%d\n", *p);
-	
-	return EXIT_SUCCESS;
-	// -> main should return an exit value
-}
+```{.c include=01a-segfault.c}
 ```
 
 Their intended program flow:
+
 - A pointer `*p` to an integer `p` is created in `main`.
 - `p` is passed by reference into `funct`, as `p2`.
 - `funct` `malloc`ates some memory on the heap for an integer...
@@ -51,6 +30,7 @@ Their intended program flow:
 - we return from `funct` and print the value of `p`.
 
 What the program really does:
+
 - An uninitialized pointer to an integer `p` is created in `main`.
 - `p` is passed **by value** into `funct`, as `p2`.
 	- This means that `main` and `funct` don't actually have a way of agreeing on a place to put the value `p`.
@@ -66,36 +46,7 @@ Anyway, onto a fixed version.
 
 ### `01b-fix.c`
 
-```c
-#include <stdlib.h>
-#include <stdio.h>
-
-// takes a pointer to a pointer to an integer.
-void funct(int **p2) {
-	// give the pointer to the integer an allocation of heap memory.
-	*p2 = malloc(sizeof(int));
-	
-	// assign to and print the integer.
-	**p2 = 14;
-	printf("%d\n", **p2);
-}
-
-int main() {
-	// uninitialized, but it's okay because funct will complete it.
-	int *p;
-	
-	// pass reference to local variable holding pointer to integer.
-	funct(&p); // &p is of type int**.
-	
-	// print the integer, confirming the local variable is now initialized
-	// and that it has the value funct set.
-	printf("%d\n", *p);
-	
-	// don't cause a memory leak!!
-	free(p);
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=01b-fix.c}
 ```
 
 Hooray for indirection! Sorry if this is too many words and not much meaning per word, I wrote out my *entire* thought process.
@@ -106,341 +57,14 @@ Hooray for indirection! Sorry if this is too many words and not much meaning per
 
 I wrote a growable string library for this.
 
-### `growArray.h`
+### `growString.h`
 
-```c
-#include <stddef.h> // -> size_t, ptrdiff_t
-#include <stdlib.h> // -> malloc, free
-#include <stdio.h> // -> printf
-
-#include <string.h> // -> memcpy (lol)
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-// It's fine to store this thing on the stack.
-// Don't mutate the internal variables directly
-// unless you know what you're doing.
-typedef struct {
-	char *data;   // pointer to string data (always a valid C string)
-	size_t length;   // length of string (index of null termination byte)
-	// note that this means length should always be less than capacity.
-	size_t capacity; // size of malloc'd container
-} GrowString;
-
-// Create a new growable string with a preset capacity.
-// Note that when a string grows, its capacity is doubled.
-// This means that it's recommended to supply a power of 2 as the capacity.
-GrowString growstr_new_with_capacity(size_t startCapacity) {
-	GrowString g;
-	g.data = calloc(startCapacity, sizeof(char));
-	g.length = 0;
-	g.capacity = startCapacity > 0 ? startCapacity : 1;
-	return g;
-}
-
-// Create a new growable string from an existing C string.
-// This allocates a new container and copies the contents, so
-// after calling this you can really do whatever with the C string.
-GrowString growstr_from_cstr(char *s, size_t capacity) {
-	GrowString g;
-	g.length = strlen(s);
-	if (capacity < g.length) capacity = 0;
-	g.capacity = capacity > 0 ? capacity : g.length + 1;
-	g.data = calloc(g.capacity, sizeof(char));
-	memcpy(g.data, s, g.length);
-	return g;
-}
-
-// Return a new GrowString, one which points to a clone of
-// the provided other GrowString.
-GrowString growstr_clone(GrowString *other) {
-	GrowString g;
-	g.data = calloc(other->capacity, sizeof(char));
-	memcpy(g.data, other->data, other->length);
-	g.length = other->length;
-	g.capacity = other->capacity;
-	return g;
-}
-
-// Destroy the string, including freeing its container.
-// If you try to push onto this, it'll automatically grow
-// back into a real string! (Probably.) Neat.
-void growstr_destroy(GrowString *g) {
-	free(g->data);
-	g->data = NULL; // if freed, nothing happens.
-	g->length = 0;
-	g->capacity = 1; // capacity needs its null byte space..
-}
-
-// Clear the string, leaving the container full of zeroes.
-// This does not shrink or free the container.
-void growstr_clear(GrowString *g) {
-	memset(g->data, 0, sizeof(char) * g->length);
-	g->length = 0;
-}
-
-// Grow the string's container to fit the new capacity.
-// You can shrink the container with this method,
-// but it will silently fail to grow if you mess up.
-void growstr_grow(GrowString *g, size_t newCapacity) {
-	if (newCapacity <= g->length) return;
-	
-	char *nextData = realloc(g->data, sizeof(char) * newCapacity);
-	
-	// I wish there was recalloc...
-	// Instead, I have to manually zero the new memory.
-	// Also, since we allow shrinking, I have to make sure this is signed.
-	ptrdiff_t remain = newCapacity - g->capacity;
-	if (remain > 0) memset(&nextData[g->capacity], 0, sizeof(char) * remain);
-	
-	// char *nextData = calloc(newCapacity, sizeof(char));
-	// memcpy(nextData, g->data, g->length);
-	// free(g->data);
-	
-	g->data = nextData;
-	g->capacity = newCapacity;
-}
-// (the function name sounds like you're cheering it on...)
-
-// Erase the front of the string up to but not including `start`.
-// This will shift all unerased characters back.
-void growstr_snipstart(GrowString *g, size_t start) {
-	if (start >= g->length) return growstr_clear(g);
-	
-	size_t remain = g->length - start;
-	memmove(g->data, &g->data[start], sizeof(char) * remain);
-	memset(&g->data[remain], 0, sizeof(char) * start);
-	
-	g->length = remain;
-	
-	// [ a b >c< 0 ] snip to 2 (len: 3; remain: 3-2=1)
-	// [ c<< b c 0 ] move remainder of string to front
-	// [ c >0 0< 0 ] fill with 0s after moved region, length: (length - remain)
-	// thats [sic] probably fine
-}
-
-// Return the index of the first char that satisfies the predicate.
-// (It should return a boolean value, but unfortunately it's unsafe to
-//  pass in isspace unless I make it awkwardly cast to and from an int...)
-// (if i had my way, it'd be bool (*fn)(char) not int (*fn)(int) ...)
-ptrdiff_t growstr_indexofpredicate(GrowString *g, int (*fn)(int), size_t start) {
-	for (size_t i = start; i < g->length; i++)
-		if (fn(g->data[i])) return i;
-	return -1;
-}
-
-// Push a character onto the end of the string.
-// If there's not enough space, this will grow the string so there is.
-void growstr_push(GrowString *g, char c) {
-	if (g->length + 1 >= g->capacity)
-		growstr_grow(g, g->capacity * 2);
-	g->data[(g->length)++] = c;
-	g->data[g->length] = '\0';
-}
-
-// Append a string onto the end of the string.
-// If there's not enough space, this will grow the string by a power of two.
-void growstr_pushstr(GrowString *g, char *s) {
-	if (s == NULL) return;
-	
-	size_t sl = strlen(s);
-	if (g->length + sl >= g->capacity) {
-		// would really love std::usize::next_power_of_two right about now
-		size_t newCap = MAX(g->length + sl, g->capacity * 2);
-		growstr_grow(g, newCap);
-	}
-	
-	memcpy(&(g->data[g->length]), s, sl);
-	g->length += sl;
-	g->data[g->length] = '\0';
-}
-
-// Pop a character from the end of the string.
-// Returns -1 if you're a fool and there's no characters left.
-// Yes, that's in-band sentinel whatever, but you should know better
-// and check ahead of time before popping.
-// That, and they didn't give me Option<T>, so I have to make do.
-char growstr_pop(GrowString *g) {
-	if (g->length < 1) return -1;
-	
-	char the = g->data[--(g->length)];
-	g->data[g->length] = '\0';
-	return the;
-}
+```{.c include=growString.h}
 ```
 
 ### `02-find-word.c`
 
-```c
-#include <stdlib.h> // -> EXIT_*, malloc
-#include <stdio.h> // -> printf, File I/O
-#include <stdbool.h> // -> bool
-
-#include <string.h> // -> strlen
-#include <ctype.h> // -> isspace
-
-#include <errno.h> // -> errno, perror
-
-#include "growString.h"
-
-#define MAX_SEARCH_LEN 128
-
-bool startsWith(const char *s, const char *start) {
-	while (*s != '\0' && *start != '\0')
-		if (*(s++) != *(start++)) return false;
-	
-	// only successful if `start` was the one that ended first.
-	return *start == '\0';
-}
-
-int main(int argc, char *argv[]) {
-	// Make sure user supplied the correct number of arguments.
-	if (argc != 2) { // (First argument is always the program executable.)
-		fprintf(stderr, "Please supply a file name as the first argument.\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	// Read search string from stdin.
-	char searchCString[MAX_SEARCH_LEN];
-	printf("Enter search string: ");
-	if (fgets(searchCString, MAX_SEARCH_LEN, stdin) == NULL) {
-		fprintf(stderr, "Something bad happened while reading stdin.\n");
-		exit(EXIT_FAILURE);
-	} // otherwise, searchString now contains the user-supplied string.
-	
-	size_t searchLength = strlen(searchCString);
-	
-	// Error if user submitted a zero-character string.
-	if (searchLength <= 0) {
-		fprintf(stderr, "Please enter a search string!\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	GrowString searchString = growstr_from_cstr(searchCString, MAX_SEARCH_LEN);
-	
-	// Note that I do accept spaces in the search string. When I match the
-	// beginning of the search string (no matter if it's whitespace or not)
-	// the program will shift into the "trying to see if it matches all the
-	// string" mode rather than "wait for the next word" mode.
-	
-	// Trim the last newline character, if present.
-	// (Had to do this in assembly once! Annoying!)
-	// (fgets stops reading after recieving a newline from stdin, but it still
-	//  does add this newline to the buffer (unless the buffer'd be filled))
-	if (searchString.data[searchString.length - 1] == '\n') {
-		growstr_pop(&searchString);
-	}
-	
-	// Open requested file, and check if it was opened successfully.
-	FILE *subject;
-	if ((subject = fopen(argv[1], "r")) == NULL) {
-		perror("An error occurred while opening the file");
-		exit(EXIT_FAILURE);
-	}
-	
-	// Create a string to store the contents of the file
-	// that *match* the user-specified search string.
-	GrowString matchString = growstr_new_with_capacity(MAX_SEARCH_LEN);
-	
-	// Safe to use fgetc because it reads byte-by-byte but returns a value
-	// wider than a byte to store EOF in. It scared me at first, but ehhh..
-	// Also, here's hoping it doesn't freaking call read() every time I
-	// call this thing. (Isn't one of C's retro claims to fame that "don't
-	//  worry, it has buffered file I/O!" or am i misremembering?...)
-	int nextChar; bool newWord = true;
-	while ((nextChar = fgetc(subject)) != EOF) {
-		if (matchString.length) {
-			// If we've already found a promising start...
-			
-			// Check if...
-			// 1. the match buffer has any more of the search string to
-			//    compare against. (curr. match shorter than search str.)
-			if (matchString.length < searchString.length) {
-				// 2. the character we just read matches the next
-				//    character of the search string, so that we can
-				//    continue building up a match to display.
-				
-				// printf("%s %c?\t(%s)\n", matchString.data, nextChar, searchString.data);
-				
-				if (nextChar == searchString.data[matchString.length]) {
-					// Add the character we just read to the match buffer.
-					growstr_push(&matchString, nextChar);
-				} else {
-					// It's possible that a space is in the search string.
-					// For each space in the match, check if the substring
-					// formed by all the characters after that space could
-					// be the beginning of a new match using startsWith.
-					
-					// (Search 'ab ac' in a file containing 'ab ab ac'
-					//  to see this scenario in action.)
-					
-					ptrdiff_t nextSpace = 0; // don't start at 0, we just
-					// checked if the string matched starting there. it didn't.
-					// (if you're wondering why it's set to 0, see this line: )
-					while ((nextSpace = growstr_indexofpredicate(&matchString, isspace, nextSpace + 1)) >= 0)
-						if (startsWith(searchString.data, &matchString.data[nextSpace + 1]))
-							break;
-					
-					if (nextSpace >= 0) { // match found
-						nextSpace++;
-						
-						// Remove all characters up to and including
-						// the space, leaving only the matching portion.
-						growstr_snipstart(&matchString, nextSpace);
-						
-						// Put the next character back into the file so
-						// we get it back when we next loop around. In my
-						// opinion, this is more solid than using a goto.
-						ungetc(nextChar, subject);
-					} else { // no match found
-						// Clear match buffer, and start over next loop.
-						growstr_clear(&matchString);
-						
-						// Also, update "new word" indicator since the
-						// character that didn't match still could possibly
-						// be a space / not a space.
-						newWord = isspace(nextChar);
-					}
-				}
-			} else if (!isspace(nextChar)) {
-				// We're reading the rest of the word after we already found
-				// a complete match with the search string.
-				
-				// Add the character we just read to the match buffer.
-				growstr_push(&matchString, nextChar);
-			} else {
-				// We've hit a whitespace character. This means the word is
-				// over and we can print it as a result!
-				printf("%s\n", matchString.data);
-				
-				// Now we clean up and update the new word indicator.
-				growstr_clear(&matchString);
-				newWord = true;
-			}
-		} else if (newWord && nextChar == searchString.data[0]) {
-			// Only triggers if this is a new word.
-			// Ooh! This might be a new match!
-			growstr_push(&matchString, nextChar);
-		} else {
-			// Eat character and do nothing.
-			// Update new word indicator.
-			newWord = isspace(nextChar);
-		}
-	}
-	
-	bool didOkay = true;
-	
-	if (ferror(subject)) {
-		fprintf(stderr, "Oops! Something bad happened while reading the file.\n");
-		didOkay = false;
-	}
-	
-	growstr_destroy(&matchString);
-	growstr_destroy(&searchString);
-	fclose(subject);
-	
-	return didOkay ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+```{.c include=02-find-word.c}
 ```
 
 ```
@@ -476,26 +100,7 @@ C,
 
 ### `04-files.sh`
 
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# Create the file.
-printf "Hello, world!\nI am a small text file!\n" > small_text_file.txt
-
-# Create another file consisting of five repetitions of the small text file.
-cat small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt small_text_file.txt > another_text_file.txt
-
-# Count number of characters and words.
-# ( -w : words; -m : characters )
-wc -wm small_text_file.txt
-wc -wm another_text_file.txt
-
-# Create a directory.
-mkdir -p my_text_files
-
-# Move both the files into this new directory.
-mv small_text_file.txt another_text_file.txt my_text_files
+```{.bash include=04-files.sh}
 ```
 
 ```
@@ -512,17 +117,7 @@ And yeah, the result of the `wc` commands were kinda surprising to me for a mome
 
 ### `05-welcome.c`
 
-```c
-#include <stdlib.h>
-#include <stdio.h>
-
-int main() {
-	// 5: Blink; 92: Bright Green text color.
-	// `man console_codes` for info
-	printf("\033[5;92mTODO: Put an interesting text string here.\033[0m\n");
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=05-welcome.c}
 ```
 
 ```
@@ -537,16 +132,7 @@ TODO: Put an interesting text string here.
 
 ### `06-echo.c`
 
-```c
-#include <stdlib.h>
-#include <stdio.h>
-
-int main(int argc, char *argv[]) {
-	for (size_t i = 0; i < argc; i++)
-		printf("%s\n", argv[i]);
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=06-echo.c}
 ```
 
 ```
@@ -566,44 +152,7 @@ Affectionately calling this "bathroom", because it's an alternative to `wc`.
 
 ### `07-bathroom.c`
 
-```c
-#include <stdlib.h> // -> EXIT_*
-#include <stdio.h> // -> getchar
-#include <stdbool.h> // -> bool
-#include <ctype.h> // -> isspace
-
-int main() {
-	// A character is a byte received from the input.
-	unsigned int chars = 0;
-	
-	// A word is the rising edge between a non-space character and a space.
-	//  This means it doesn't include multiple spaces in a row.
-	unsigned int words = 0;
-	bool newWord = true;
-	
-	// A line is an occurrence of a line break character.
-	//  This will include empty lines, and it also means that an input without
-	//  any line breaks will have "0 lines". This is normal.
-	unsigned int lines = 0;
-	
-	int nextChar;
-	while ((nextChar = getchar()) != EOF) {
-		chars++;
-		
-		if (isspace(nextChar)) {
-			newWord = true;
-		} else if (newWord) {
-			words++;
-			newWord = false;
-		}
-		
-		if (nextChar == '\n') lines++;
-	}
-	
-	printf("%d characters\n%d words\n%d lines\n", chars, words, lines);
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=07-bathroom.c}
 ```
 
 ```
@@ -635,12 +184,7 @@ I'm a bit of a newbie to this kinda stuff. At the very least I now know about `g
 
 ### `08a-libhelloworld.c`
 
-```c
-#include <stdio.h>
-
-void sayHelloWorld() {
-	printf("Hello, world!\n");
-}
+```{.c include=08a-libhelloworld.c}
 ```
 
 ```
@@ -658,15 +202,7 @@ Anyway, that's the object containing the `sayHelloWorld` symbol... now for the p
 
 ### `08b-helloworld.c`
 
-```c
-#include <stdlib.h>
-
-extern void sayHelloWorld();
-
-int main() {
-	sayHelloWorld();
-	return EXIT_SUCCESS;
-}
+```{.c include=08b-helloworld.c}
 ```
 
 And I'm using an `extern` declaration here to say "this function should not be expected to be present in this program, and you gotta link it in from somewhere else!"
@@ -734,7 +270,7 @@ Hmm, and it seems stuff like `1p` means "the POSIX standardized version of this"
 ```
 $ MAN_POSIXLY_CORRECT=0 man cat.1
 ```
-> <pre style="font-family:'Iosevka',monospace;">CAT(1)                           User Commands                          CAT(1)
+> <pre>CAT(1)                           User Commands                          CAT(1)
 >
 > <b>NAME</b>
 >        cat - concatenate files and print on the standard output
@@ -773,7 +309,7 @@ While `printf` can also be a shell command, we're talking about the C function. 
 ```
 $ MAN_POSIXLY_CORRECT=0 man printf.3
 ```
-> <pre style="font-family:'Iosevka',monospace;">printf(3)                  Library Functions Manual                  printf(3)
+> <pre>printf(3)                  Library Functions Manual                  printf(3)
 >
 > <b>NAME</b>
 >        printf,  fprintf,  dprintf,  sprintf,  snprintf, vprintf, vfprintf, vd-
@@ -802,7 +338,7 @@ $ MAN_POSIXLY_CORRECT=0 man printf.3
 >                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
 >        <b>int vsprintf(char *restrict </b><u>str</u><b>,</b>
 >                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
-> <span style="background:white;color:black"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
+> <span style="background:black;color:white"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
 > </pre>
 
 ### `write`
@@ -812,7 +348,7 @@ And finally, `write`, the system call. This means it'll be in section 2.
 ```
 $ man write.2
 ```
-> <pre style="font-family:'Iosevka',monospace;">write(2)                      System Calls Manual                     write(2)
+> <pre>write(2)                      System Calls Manual                     write(2)
 >
 > <b>NAME</b>
 >        write - write to a file descriptor
@@ -841,7 +377,7 @@ $ man write.2
 >        If  the  file was <b>open</b>(2)ed with <b>O_APPEND</b>, the file offset is first set
 >        to the end of the file before writing.  The adjustment of the file off-
 >        set and the write operation are performed as an atomic step.
-> <span style="background:white;color:black"> Manual page write(2) line 1 (press h for help or q to quit)</span>
+> <span style="background:black;color:white"> Manual page write(2) line 1 (press h for help or q to quit)</span>
 > </pre>
 
 ## Question 10
@@ -889,55 +425,7 @@ void compute_stats(struct numlist *listptr) {
 
 #### `11a-lrange.c`
 
-```c
-#include <stdlib.h> // -> EXIT_*, malloc
-#include <stdio.h> // -> printf, File I/O
-#include <stdbool.h> // -> bool
-
-#include <string.h> // -> strlen
-
-#include <errno.h> // -> errno, perror
-
-int main(int argc, char *argv[]) {
-	if (argc < 3 || argc > 4) {
-		fprintf(stderr,
-			"Please supply arguments in the form:\n"
-			"%s <start line> <end line> <file name>\n",
-			(argc > 0) ? argv[0] : "lrange"
-		);
-		exit(EXIT_FAILURE);
-	}
-	
-	unsigned int startLine = strtoul(argv[1], NULL, 0);
-	unsigned int endLine   = strtoul(argv[2], NULL, 0);
-	
-	bool fromFile = argc == 4;
-	FILE *subject = stdin;
-	if (fromFile && (subject = fopen(argv[3], "r")) == NULL) {
-		perror("An error occurred while opening the file");
-		exit(EXIT_FAILURE);
-	}
-	
-	// Again, like in bathroom:
-	// A line is an occurrence of a line break character.
-	//  This will include empty lines, and it also means that an input without
-	//  any line breaks will have "0 lines". This is normal.
-	unsigned int currentLine = 0;
-	
-	int nextChar;
-	while ((nextChar = fgetc(subject)) != EOF) {
-		// Repeat char to stdout if within the range.
-		if (currentLine >= startLine && currentLine < endLine)
-			fputc(nextChar, stdout);
-		
-		if (nextChar == '\n') currentLine++;
-	}
-	
-	// Remember to close your file handles...
-	if (fromFile) fclose(subject);
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=11a-lrange.c}
 ```
 
 My version is not inclusive of the end part of the line range. This can easily be changed, thankfully. As simple as changing line 32 to `if (currentLine >= startLine && currentLine <= endLine)`.
@@ -963,94 +451,11 @@ But yeah, since it's possible to use `stdin`, `fseek`ing backwards is out of the
 
 Thankfully, question 2 comes to the rescue! All I really had to add to my `growString.h` library was a helper method for initializing a growable string.
 
-```c
-// Sets all attributes of a GrowString to their default values.
-// This loses hold of any data container, and is really only meant
-// for initializing.
-void growstr_default(GrowString *g) {
-	g->data = NULL;
-	g->length = 0;
-	g->capacity = 1;
-}
-```
+(Note: I automatically write the source files into this document, so the helper method is already there in Question 2's source listing. It shouldn't effect anything.)
 
 #### `11b-last10.c`
 
-```c
-#include <stdlib.h> // -> EXIT_*, malloc
-#include <stdio.h> // -> printf, File I/O
-#include <stdbool.h> // -> bool
-
-#include <string.h> // -> strlen
-
-#include <errno.h> // -> errno, perror
-
-#include "growString.h"
-
-#define SAVED_LINES 10
-
-int main(int argc, char *argv[]) {
-	if (argc > 2) {
-		char *name = (argc > 0) ? argv[0] : "last10";
-		fprintf(stderr,
-			"Please supply arguments in either form:\n"
-			"%s\n" "%s <file name>\n",
-			name, name
-		);
-		exit(EXIT_FAILURE);
-	}
-	
-	bool fromFile = argc == 2;
-	FILE *subject = stdin;
-	if (fromFile && (subject = fopen(argv[1], "r")) == NULL) {
-		perror("An error occurred while opening the file");
-		exit(EXIT_FAILURE);
-	}
-	
-	// Initialize a list of GrowStrings to store the last 10 lines.
-	GrowString lineBuffer[SAVED_LINES];
-	for (size_t i = 0; i < SAVED_LINES; i++)
-		growstr_default(&lineBuffer[i]);
-	
-	int nextChar; bool newLine = false;
-	while ((nextChar = fgetc(subject)) != EOF) {
-		// If last character was a newline, rotate the buffers back.
-		if (newLine) {
-			// Destroy oldest buffered line.
-			growstr_destroy(&lineBuffer[0]);
-			
-			// Shift back all the lines.
-			memmove(
-				&lineBuffer[0], &lineBuffer[1],
-				sizeof(GrowString) * (SAVED_LINES - 1)
-			);
-			
-			// Create a "new" line.
-			growstr_default(&lineBuffer[SAVED_LINES - 1]);
-			
-			// A nice gesture.
-			newLine = false;
-		}
-		
-		// Push a character into the string.
-		growstr_push(&lineBuffer[SAVED_LINES - 1], nextChar);
-		
-		// Update "new line" status.
-		newLine = nextChar == '\n';
-	}
-	
-	// Remember to close your file handles...
-	if (fromFile) fclose(subject);
-	
-	// Print out the last 10 or so lines!
-	for (size_t i = 0; i < SAVED_LINES; i++) {
-		if (lineBuffer[i].data != NULL)
-			printf("%s", lineBuffer[i].data);
-		growstr_destroy(&lineBuffer[i]);
-	}
-	
-	return EXIT_SUCCESS;
-}
+```{.c include=11b-last10.c}
 ```
 
 ```
