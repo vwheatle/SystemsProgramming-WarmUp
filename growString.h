@@ -16,6 +16,15 @@ typedef struct {
 	size_t capacity; // size of malloc'd container
 } GrowString;
 
+// Sets all attributes of a GrowString to their default values.
+// This loses hold of any data container, and is really only meant
+// for initializing.
+void growstr_default(GrowString *g) {
+	g->data = NULL;
+	g->length = 0;
+	g->capacity = 1;
+}
+
 // Create a new growable string with a preset capacity.
 // Note that when a string grows, its capacity is doubled.
 // This means that it's recommended to supply a power of 2 as the capacity.
@@ -56,7 +65,7 @@ GrowString growstr_clone(GrowString *other) {
 // back into a real string! (Probably.) Neat.
 void growstr_destroy(GrowString *g) {
 	free(g->data);
-	g->data = NULL; // if freed, nothing happens.
+	g->data = NULL; // if freed again, nothing happens.
 	g->length = 0;
 	g->capacity = 1; // capacity needs its null byte space..
 }
@@ -122,7 +131,7 @@ ptrdiff_t growstr_indexofpredicate(GrowString *g, int (*fn)(int), size_t start) 
 // If there's not enough space, this will grow the string so there is.
 void growstr_push(GrowString *g, char c) {
 	if (g->length + 1 >= g->capacity)
-		growstr_grow(g, g->capacity * 2);
+		growstr_grow(g, MAX(4, g->capacity * 2));
 	g->data[(g->length)++] = c;
 	g->data[g->length] = '\0';
 }
