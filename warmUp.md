@@ -3,6 +3,8 @@ Systems Programming
 
 # Warm-Up
 
+All this code is available as a Git repository [over at my GitHub](https://github.com/vwheatle/SystemsProgramming-WarmUp).
+
 ## Question 1
 
 > In the following code, the first `printf` reached produces the output "14", but the second `printf` can cause a bus error / segmentation fault. Why?
@@ -88,6 +90,9 @@ int main() {
 	// print the integer, confirming the local variable is now initialized
 	// and that it has the value funct set.
 	printf("%d\n", *p);
+	
+	// don't cause a memory leak!!
+	free(p);
 	
 	return EXIT_SUCCESS;
 }
@@ -639,8 +644,8 @@ void sayHelloWorld() {
 ```
 
 ```
-$ gcc -c -Wall -Werror -o ./out/libhelloworld.o 08a-libhelloworld.c
-$ nm ./out/libhelloworld.o
+$ gcc -c -Wall -Werror -o ./libhelloworld.o 08a-libhelloworld.c
+$ nm ./libhelloworld.o
                  U puts
 0000000000000000 T sayHelloWorld
 ```
@@ -955,3 +960,112 @@ The first edition, published February 22, 1978, was the first widely available b
 > If no file is provided (the latter), the program processes standard input.
 
 But yeah, since it's possible to use `stdin`, `fseek`ing backwards is out of the question. This means we'll need to save our own line buffer.
+
+Thankfully, question 2 comes to the rescue! All I really had to add to my `growString.h` library was a helper method for initializing a growable string.
+
+```c
+// Sets all attributes of a GrowString to their default values.
+// This loses hold of any data container, and is really only meant
+// for initializing.
+void growstr_default(GrowString *g) {
+	g->data = NULL;
+	g->length = 0;
+	g->capacity = 1;
+}
+```
+
+#### `11b-last10.c`
+
+```c
+#include <stdlib.h> // -> EXIT_*, malloc
+#include <stdio.h> // -> printf, File I/O
+#include <stdbool.h> // -> bool
+
+#include <string.h> // -> strlen
+
+#include <errno.h> // -> errno, perror
+
+#include "growString.h"
+
+#define SAVED_LINES 10
+
+int main(int argc, char *argv[]) {
+	if (argc > 2) {
+		char *name = (argc > 0) ? argv[0] : "last10";
+		fprintf(stderr,
+			"Please supply arguments in either form:\n"
+			"%s\n" "%s <file name>\n",
+			name, name
+		);
+		exit(EXIT_FAILURE);
+	}
+	
+	bool fromFile = argc == 2;
+	FILE *subject = stdin;
+	if (fromFile && (subject = fopen(argv[1], "r")) == NULL) {
+		perror("An error occurred while opening the file");
+		exit(EXIT_FAILURE);
+	}
+	
+	// Initialize a list of GrowStrings to store the last 10 lines.
+	GrowString lineBuffer[SAVED_LINES];
+	for (size_t i = 0; i < SAVED_LINES; i++)
+		growstr_default(&lineBuffer[i]);
+	
+	int nextChar; bool newLine = false;
+	while ((nextChar = fgetc(subject)) != EOF) {
+		// If last character was a newline, rotate the buffers back.
+		if (newLine) {
+			// Destroy oldest buffered line.
+			growstr_destroy(&lineBuffer[0]);
+			
+			// Shift back all the lines.
+			memmove(
+				&lineBuffer[0], &lineBuffer[1],
+				sizeof(GrowString) * (SAVED_LINES - 1)
+			);
+			
+			// Create a "new" line.
+			growstr_default(&lineBuffer[SAVED_LINES - 1]);
+			
+			// A nice gesture.
+			newLine = false;
+		}
+		
+		// Push a character into the string.
+		growstr_push(&lineBuffer[SAVED_LINES - 1], nextChar);
+		
+		// Update "new line" status.
+		newLine = nextChar == '\n';
+	}
+	
+	// Remember to close your file handles...
+	if (fromFile) fclose(subject);
+	
+	// Print out the last 10 or so lines!
+	for (size_t i = 0; i < SAVED_LINES; i++) {
+		if (lineBuffer[i].data != NULL)
+			printf("%s", lineBuffer[i].data);
+		growstr_destroy(&lineBuffer[i]);
+	}
+	
+	return EXIT_SUCCESS;
+}
+```
+
+```
+$ gcc -Werror -Wall -o last10 11a-last10.c
+$ ./last10 < sampleText.txt
+
+In April 1988, the second edition of the book was published, updated to cover the changes to the language resulting from the then-new ANSI C standard, particularly with the inclusion of reference material on standard libraries. The second edition of the book (and as of 2022, the most recent) has since been translated into over 20 languages. In 2012, an eBook version of the second edition was published in ePub, Mobi, and PDF formats.
+
+ANSI C, first standardized in 1989 (as ANSI X3.159-1989), has since undergone several revisions, the most recent of which is ISO/IEC 9899:2018 (also termed C17 or C18), adopted as an ANSI standard in June 2018. However, no new edition of The C Programming Language has been issued to cover the more recent standards. 
+
+Brian Kernighan and Dennis Ritchie are quoted as saying "Supercalifragilistic expialidocious. More people have been inside the CS building than I have. The quick brown fox jumps over the lazy dog." When asked how this relates to C, they responded with "Well, this whole paragraph isn't real. [[V Wheatley]] (red link) is just trying to write some funny stuff."
+
+ab ab ac ad
+
+thin
+```
+
+Aww, and I forgot that I had a few test phrases at the end there for debugging question 2.
