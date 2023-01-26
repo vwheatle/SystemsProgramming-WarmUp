@@ -102,9 +102,16 @@ int main(int argc, char *argv[]) {
 					
 					ptrdiff_t nextSpace = 0; // don't start at 0, we just
 					// checked if the string matched starting there. it didn't.
-					// (if you're wondering why it's set to 0, see this line: )
-					while ((nextSpace = growstr_indexofpredicate(&matchString, isspace, nextSpace + 1)) >= 0)
-						if (startsWith(searchString.data, &matchString.data[nextSpace + 1]))
+					// (wondering why it's set to 0? see this statement: )
+					while ((
+						nextSpace = growstr_indexofpredicate(
+							&matchString, isspace, nextSpace + 1
+						)
+					) >= 0)
+						if (startsWith(
+							searchString.data,
+							&matchString.data[nextSpace + 1]
+						))
 							break;
 					
 					if (nextSpace >= 0) { // match found

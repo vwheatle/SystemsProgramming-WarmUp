@@ -70,6 +70,7 @@ function CodeBlock(elem)
 		end
 		
 		-- make a code block!!
+		elem.attributes.include = nil
 		return pandoc.CodeBlock(
 			contents,
 			pandoc.Attr(
