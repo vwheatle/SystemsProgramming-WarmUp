@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-```
+```text
 $ gcc -Wall -Werror -o ./find-word 02-find-word.c
 $ ./find-word sampleText.txt
 Enter search string: C
@@ -519,7 +519,7 @@ mkdir -p my_text_files
 mv small_text_file.txt another_text_file.txt my_text_files
 ```
 
-```
+```text
 $ ./04-files.sh
  8 38 small_text_file.txt
  40 190 another_text_file.txt
@@ -546,7 +546,7 @@ int main() {
 }
 ```
 
-```
+```text
 $ gcc -Wall -Werror -o ./welcome 05-welcome.c
 $ ./welcome
 TODO: Put an interesting text string here.
@@ -570,7 +570,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-```
+```text
 $ gcc -Wall -Werror -o ./my-echo 06-echo.c
 $ ./my-echo a b c
 ./my-echo
@@ -627,7 +627,7 @@ int main() {
 }
 ```
 
-```
+```text
 $ gcc -Wall -Werror -o ./bathroom 07-bathroom.c
 $ cat sampleText.txt | ./bathroom
 2540 characters
@@ -637,7 +637,7 @@ $ cat sampleText.txt | ./bathroom
 
 And yeah, the way I count lines is like `wc`. If the input doesn't have a trailing newline (like most inputs should) then my program reports "0 lines". This is probably fine.
 
-```
+```text
 $ echo "Hello, world!" | ./bathroom  # echo adds a trailing newline
 14 characters
 2 words
@@ -664,7 +664,7 @@ void sayHelloWorld() {
 }
 ```
 
-```
+```text
 $ gcc -c -Wall -Werror -o ./libhelloworld.o 08a-libhelloworld.c
 $ nm ./libhelloworld.o
                  U puts
@@ -692,7 +692,7 @@ int main() {
 
 And I'm using an `extern` declaration here to say "this function should not be expected to be present in this program, and you gotta link it in from somewhere else!"
 
-```
+```text
 $ gcc -Wall -Werror -o ./hw libhelloworld.o 08b-helloworld.c
 $ ./hw
 Hello, world!
@@ -710,10 +710,10 @@ Hello, world!
 
 Because I constantly forget what the section numbers mean, I'm gonna first run `man man` and copy down just that.
 
-```
+```text
 $ man man
 ```
-```stdout
+```text
 Man: find all matching manual pages (set MAN_POSIXLY_CORRECT to avoid this)
  * man (1)
    man (7mp)
@@ -724,7 +724,7 @@ Man: _
 
 Augh. Annoying.
 
-```stdout
+```text
 Man: 1
 ```
 
@@ -752,7 +752,7 @@ Hmm, and it seems stuff like `1p` means "the POSIX standardized version of this"
 
 `cat` is a shell command, so it'll be under section 1.
 
-```
+```text
 $ MAN_POSIXLY_CORRECT=0 man cat.1
 ```
 <pre>CAT(1)                           User Commands                          CAT(1)
@@ -791,7 +791,7 @@ $ MAN_POSIXLY_CORRECT=0 man cat.1
 
 While `printf` can also be a shell command, we're talking about the C function. This means it'll be under section 3, "Library Calls".
 
-```
+```text
 $ MAN_POSIXLY_CORRECT=0 man printf.3
 ```
 <pre>printf(3)                  Library Functions Manual                  printf(3)
@@ -830,7 +830,7 @@ $ MAN_POSIXLY_CORRECT=0 man printf.3
 
 And finally, `write`, the system call. This means it'll be in section 2.
 
-```
+```text
 $ man write.2
 ```
 <pre>write(2)                      System Calls Manual                     write(2)
@@ -963,7 +963,7 @@ int main(int argc, char *argv[]) {
 
 My version is not inclusive of the end part of the line range. This can easily be changed, thankfully. As simple as changing line 32 to `if (currentLine >= startLine && currentLine <= endLine)`.
 
-```
+```text
 $ gcc -Werror -Wall -o lrange 11a-lrange.c
 $ ./lrange 6 7 sampleText.txt
 The first edition, published February 22, 1978, was the first widely available book on the C programming language. Its version of C is sometimes termed K&R C (after the book's authors), often to distinguish this early version from the later version of C standardized as ANSI C.
@@ -973,7 +973,7 @@ The first edition, published February 22, 1978, was the first widely available b
 
 > Write a program called `last10` that prints the last ten lines of a text file. The program can be used from the command line with:
 >
-> ```
+> ```text
 > last10 <filename>
 > last10
 > ```
@@ -1065,7 +1065,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-```
+```text
 $ gcc -Werror -Wall -o last10 11a-last10.c
 $ ./last10 < sampleText.txt
 
