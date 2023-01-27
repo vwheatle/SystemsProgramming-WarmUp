@@ -5,6 +5,8 @@ Systems Programming
 
 All this code *was developed in* and *is available as* a Git repository [over at my GitHub](https://github.com/vwheatle/SystemsProgramming-WarmUp). Still, I've tried to include up-to-date source code listings in this document.
 
+I wrote a build script (available in the Git repository as `00-runAll.sh`) that builds all the programs. It also accepts a `run` parameter that will run through every program with Valgrind and some sample input. Next project I'll try to figure out `make` so I can make it a `Makefile`.
+
 ## Question 1
 
 > In the following code, the first `printf` reached produces the output "14", but the second `printf` can cause a bus error / segmentation fault. Why?
@@ -753,7 +755,7 @@ Hmm, and it seems stuff like `1p` means "the POSIX standardized version of this"
 ```text
 $ MAN_POSIXLY_CORRECT=0 man cat.1
 ```
-<pre>CAT(1)                           User Commands                          CAT(1)
+<pre><code>CAT(1)                           User Commands                          CAT(1)
 
 <b>NAME</b>
        cat - concatenate files and print on the standard output
@@ -782,8 +784,8 @@ $ MAN_POSIXLY_CORRECT=0 man cat.1
 
        <b>-s</b>, <b>--squeeze-blank</b>
               suppress repeated empty output lines
-<span style="background:white;color:black;"> Manual page cat(1) line 1 (press h for help or q to quit)</span>
-</pre>
+<span style="background:black;color:white"> Manual page cat(1) line 1 (press h for help or q to quit)</span>
+</code></pre>
 
 ### `printf`
 
@@ -792,7 +794,7 @@ While `printf` can also be a shell command, we're talking about the C function. 
 ```text
 $ MAN_POSIXLY_CORRECT=0 man printf.3
 ```
-<pre>printf(3)                  Library Functions Manual                  printf(3)
+<pre><code>printf(3)                  Library Functions Manual                  printf(3)
 
 <b>NAME</b>
        printf,  fprintf,  dprintf,  sprintf,  snprintf, vprintf, vfprintf, vd-
@@ -822,7 +824,7 @@ $ MAN_POSIXLY_CORRECT=0 man printf.3
        <b>int vsprintf(char *restrict </b><u>str</u><b>,</b>
                    <b>const char *restrict </b><u>format</u><b>, va_list </b><u>ap</u><b>);</b>
 <span style="background:black;color:white"> Manual page printf(3) line 1 (press h for help or q to quit)</span>
-</pre>
+</code></pre>
 
 ### `write`
 
@@ -831,7 +833,7 @@ And finally, `write`, the system call. This means it'll be in section 2.
 ```text
 $ man write.2
 ```
-<pre>write(2)                      System Calls Manual                     write(2)
+<pre><code>write(2)                      System Calls Manual                     write(2)
 
 <b>NAME</b>
        write - write to a file descriptor
@@ -861,7 +863,7 @@ $ man write.2
        to the end of the file before writing.  The adjustment of the file off-
        set and the write operation are performed as an atomic step.
 <span style="background:black;color:white"> Manual page write(2) line 1 (press h for help or q to quit)</span>
-</pre>
+</code></pre>
 
 ## Question 10
 
@@ -996,8 +998,6 @@ But yeah, since it's possible to use `stdin`, `fseek`ing backwards is out of the
 
 Thankfully, question 2 comes to the rescue! All I really had to add to my `growString.h` library was a helper method for initializing a growable string.
 
-(Note: I automatically write the source files into this document, so the helper method is already there in Question 2's source listing. It shouldn't effect anything.)
-
 #### `11b-last10.c`
 
 ```c
@@ -1090,17 +1090,3 @@ thin
 ```
 
 Aww, and I forgot that I had a few test phrases at the end there for debugging question 2.
-
-## Output
-
-Here's a big screenshot of all the tools running in order.
-
-I wrote a build script (available in the Git repository as `00-runAll.sh`) that builds all the programs. It also accepts a `run` parameter that will run through every program with Valgrind and some sample input. Next project I'll try to make it a `Makefile`, hah...
-
-Also, oops!: the `sampleText.txt` doesn't really have a flattering output here, and it's mainly because the document is only 18 lines long and half of those lines are paragraphs that aren't wrapped at 80 characters.
-
-```text
-$ ./00-runAll.sh run
-```
-
-![](./output.png)
