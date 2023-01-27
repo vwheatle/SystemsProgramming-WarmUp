@@ -12,7 +12,7 @@ set -euo pipefail
 # - jump back a line (for same reason)
 VALGRIND_PRETTY_COLORS=$(printf "\e[31m\e[2K\e[1F,\e[0m\e[2K\e[1F")
 
-GCC_FLAGS=(-g -Wall -Werror)
+GCC_FLAGS=(-g -Wall -Wextra -Wpedantic -Werror)
 VALGRIND_FLAGS=(--quiet --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=3 --error-markers="$VALGRIND_PRETTY_COLORS" --error-exitcode=1)
 
 mkdir -p out

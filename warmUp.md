@@ -563,7 +563,7 @@ TODO: Put an interesting text string here.
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
-	for (size_t i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		printf("%s\n", argv[i]);
 	
 	return EXIT_SUCCESS;

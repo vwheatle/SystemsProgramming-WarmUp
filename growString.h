@@ -103,7 +103,7 @@ void growstr_grow(GrowString *g, size_t newCapacity) {
 // Erase the front of the string up to but not including `start`.
 // This will shift all unerased characters back.
 void growstr_snipstart(GrowString *g, size_t start) {
-	if (start >= g->length) return growstr_clear(g);
+	if (start >= g->length) { growstr_clear(g); return; }
 	
 	size_t remain = g->length - start;
 	memmove(g->data, &g->data[start], sizeof(char) * remain);
