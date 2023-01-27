@@ -373,8 +373,6 @@ int main(int argc, char *argv[]) {
 				//    character of the search string, so that we can
 				//    continue building up a match to display.
 				
-				// printf("%s %c?\t(%s)\n", matchString.data, nextChar, searchString.data);
-				
 				if (nextChar == searchString.data[matchString.length]) {
 					// Add the character we just read to the match buffer.
 					growstr_push(&matchString, nextChar);
@@ -916,8 +914,12 @@ void compute_stats(struct numlist *listptr) {
 #include <stdbool.h> // -> bool
 
 #include <string.h> // -> strlen
+#include <limits.h> // -> ULONG_MAX
 
 #include <errno.h> // -> errno, perror
+
+// Helper macro that makes a few lines a bit shorter.
+#define perror_fail(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 int main(int argc, char *argv[]) {
 	if (argc < 3 || argc > 4) {
@@ -929,15 +931,22 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	
-	unsigned int startLine = strtoul(argv[1], NULL, 0);
-	unsigned int endLine   = strtoul(argv[2], NULL, 0);
+	// Parse the start line/end line arguments.
+	// There's no (safe) (usable) strtoui, so I'm using strtoul.
+	// and then narrowing the types later. Kinda overkill.
+	// strtoul is fallible, so we do have to check for errors.
+	unsigned long startLineL = strtoul(argv[1], NULL, 0);
+	if (startLineL == ULONG_MAX) perror_fail("Invalid start line");
+	unsigned long endLineL   = strtoul(argv[2], NULL, 0);
+	if (endLineL == ULONG_MAX) perror_fail("Invalid end line");
+	unsigned int startLine = startLineL, endLine = endLineL;
 	
+	// Decide if we should read from a file or stdin
+	// based on if there's a file argument.
 	bool fromFile = argc == 4;
 	FILE *subject = stdin;
-	if (fromFile && (subject = fopen(argv[3], "r")) == NULL) {
-		perror("An error occurred while opening the file");
-		exit(EXIT_FAILURE);
-	}
+	if (fromFile && (subject = fopen(argv[3], "r")) == NULL)
+		perror_fail("An error occurred while opening the file");
 	
 	// Again, like in bathroom:
 	// A line is an occurrence of a line break character.
@@ -948,9 +957,12 @@ int main(int argc, char *argv[]) {
 	int nextChar;
 	while ((nextChar = fgetc(subject)) != EOF) {
 		// Repeat char to stdout if within the range.
+		// This is not inclusive of the provided end line.
+		// If you want it to be inclusive, just... <= endline)
 		if (currentLine >= startLine && currentLine < endLine)
 			fputc(nextChar, stdout);
 		
+		// Keep track of how many lines we've encountered.
 		if (nextChar == '\n') currentLine++;
 	}
 	
@@ -961,7 +973,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-My version is not inclusive of the end part of the line range. This can easily be changed, thankfully. As simple as changing line 32 to `if (currentLine >= startLine && currentLine <= endLine)`.
+This prints up to but not including the provided end line. Thankfully, that's easy to change if needed.
 
 ```text
 $ gcc -Werror -Wall -o lrange 11a-lrange.c
@@ -1039,9 +1051,6 @@ int main(int argc, char *argv[]) {
 			
 			// Create a "new" line.
 			growstr_default(&lineBuffer[SAVED_LINES - 1]);
-			
-			// A nice gesture.
-			newLine = false;
 		}
 		
 		// Push a character into the string.

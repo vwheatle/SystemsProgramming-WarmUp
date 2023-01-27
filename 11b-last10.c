@@ -48,9 +48,6 @@ int main(int argc, char *argv[]) {
 			
 			// Create a "new" line.
 			growstr_default(&lineBuffer[SAVED_LINES - 1]);
-			
-			// A nice gesture.
-			newLine = false;
 		}
 		
 		// Push a character into the string.

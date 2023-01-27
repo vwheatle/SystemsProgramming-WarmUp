@@ -86,8 +86,6 @@ int main(int argc, char *argv[]) {
 				//    character of the search string, so that we can
 				//    continue building up a match to display.
 				
-				// printf("%s %c?\t(%s)\n", matchString.data, nextChar, searchString.data);
-				
 				if (nextChar == searchString.data[matchString.length]) {
 					// Add the character we just read to the match buffer.
 					growstr_push(&matchString, nextChar);
