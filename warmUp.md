@@ -3,7 +3,7 @@ Systems Programming
 
 # Warm-Up
 
-All this code is available as a Git repository [over at my GitHub](https://github.com/vwheatle/SystemsProgramming-WarmUp).
+All this code *was developed in* and *is available as* a Git repository [over at my GitHub](https://github.com/vwheatle/SystemsProgramming-WarmUp). Still, I've tried to include up-to-date source code listings in this document.
 
 ## Question 1
 
@@ -1081,3 +1081,17 @@ thin
 ```
 
 Aww, and I forgot that I had a few test phrases at the end there for debugging question 2.
+
+## Output
+
+Here's a big screenshot of all the tools running in order.
+
+I wrote a build script (available in the Git repository as `00-runAll.sh`) that builds all the programs. It also accepts a `run` parameter that will run through every program with Valgrind and some sample input. Next project I'll try to make it a `Makefile`, hah...
+
+Also, oops!: the `sampleText.txt` doesn't really have a flattering output here, and it's mainly because the document is only 18 lines long and half of those lines are paragraphs that aren't wrapped at 80 characters.
+
+```text
+$ ./00-runAll.sh run
+```
+
+![](./output.png)
