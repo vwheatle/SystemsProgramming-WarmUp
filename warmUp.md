@@ -50,8 +50,9 @@ Their intended program flow:
 - `funct` `malloc`ates some memory on the heap for an integer...
 - and `p2` is updated with the address of this heap-stored integer.
 	- (and this all assumes we don't immediately OoM for some reason...)
-- the value `14` is written to the heap-stored integer, and then printed.
-- we return from `funct` and print the value of `p`.
+	- (Why am I saying this? None of my programs check for OoM either.)
+- The value `14` is written to the heap-stored integer, and then printed.
+- We return from `funct` and print the value of `p`.
 
 What the program really does:
 
@@ -62,7 +63,7 @@ What the program really does:
 - and `p2` is **overwritten** with the address of this heap-stored integer.
 	- This means that we lose the address `main` wanted `p2` to use...
 - and `funct` returns, losing the reference to the heap-stored integer and leaking memory.
-- finally, `main` tries to dereference its still-not-actually-initialized pointer and segfaults and dies.
+- Finally, `main` tries to dereference its still-not-actually-initialized pointer and segfaults and dies.
 
 Even if we passed a pointer to the local integer pointer by writing `funct(&p)`, this wouldn't be enough &mdash; we still need to update the types to indicate that we're passing a pointer to a pointer to a thing. Convoluted!
 
@@ -880,8 +881,13 @@ $ man write.2
 > ...write a function `compute_stats(struct numlist *listptr)`, which takes a list that already has the `->list` and `->len` fields populated.
 
 ```c
+#include <math.h>
+
 void compute_stats(struct numlist *listptr) {
 	float total = 0.0;
+	
+	listptr->min = INFINITY;
+	listptr->max = -INFINITY;
 	
 	for (int i = 0; i < listptr->len; i++) {
 		float thisOne = listptr->list[i];
@@ -897,6 +903,8 @@ void compute_stats(struct numlist *listptr) {
 	listptr->avg = total / listptr->len;
 }
 ```
+
+Also wrote a test program for this, available as `10-numlist.c` in the Git repository.
 
 ## Question 11
 

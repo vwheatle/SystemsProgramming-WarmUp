@@ -26,6 +26,7 @@ gcc "${GCC_FLAGS[@]}" -o ./out/my-echo ./06-echo.c
 gcc "${GCC_FLAGS[@]}" -o ./out/bathroom ./07-bathroom.c
 gcc "${GCC_FLAGS[@]}" -c -o ./out/libhelloworld.o ./08a-libhelloworld.c
 gcc "${GCC_FLAGS[@]}" -o ./out/hw ./out/libhelloworld.o ./08b-helloworld.c
+gcc "${GCC_FLAGS[@]}" -o ./out/numlist ./10-numlist.c
 gcc "${GCC_FLAGS[@]}" -o ./out/lrange ./11a-lrange.c
 gcc "${GCC_FLAGS[@]}" -o ./out/last10 ./11b-last10.c
 
@@ -64,6 +65,10 @@ if [[ "$*" =~ "run" ]]; then
 	nm ./out/libhelloworld.o
 	echo "$ ./out/hw"
 	valgrind "${VALGRIND_FLAGS[@]}" ./out/hw
+
+	printf "\n=== ./10-numlist.c ===\n"
+	echo "$ ./out/numlist"
+	valgrind "${VALGRIND_FLAGS[@]}" ./out/numlist
 
 	printf "\n=== ./11a-lrange.c ===\n"
 	echo "$ ./out/lrange 6 7 ./sampleText.txt"
